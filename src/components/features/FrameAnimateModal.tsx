@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Upload, Film, Send, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Film, Send, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { Button, IconButton } from '../ui/Button';
+import { PROMPT_PRESETS } from '../../services/gemini';
 
 interface FrameAnimateModalProps {
   isOpen: boolean;
@@ -111,7 +112,21 @@ export const FrameAnimateModal: React.FC<FrameAnimateModalProps> = ({
             </div>
 
             <div className="flex flex-col gap-4">
-              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/40">Cinematic Vision</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/40">Cinematic Vision</span>
+                <div className="flex gap-2">
+                  {PROMPT_PRESETS.map(preset => (
+                    <button
+                      key={preset.id}
+                      onClick={() => setPrompt(preset.prompt)}
+                      className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
+                    >
+                      <Sparkles size={10} className="text-white/20" />
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <textarea 
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -128,6 +143,8 @@ export const FrameAnimateModal: React.FC<FrameAnimateModalProps> = ({
               disabled={!endImage || !prompt.trim()}
               variant="primary"
               size="lg"
+              badge="AI"
+              badgeVariant="gemini"
               icon={<Send size={18} strokeWidth={1.5} />}
             >
               Generate Cinematic Video

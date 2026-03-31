@@ -450,8 +450,8 @@ export default function App() {
                 />
                 {!isAnalyzing && !isAnimatingSource && !showSourcePrompt && (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-8 flex justify-center gap-4">
-                    <Button onClick={splitImage} variant="primary" size="md" icon={<Scissors size={18} />}>Analyze & Split</Button>
-                    <Button onClick={() => setShowSourcePrompt(true)} variant="secondary" size="md" icon={<Video size={18} />}>Animate Full</Button>
+                    <Button onClick={splitImage} variant="primary" size="md" icon={<Scissors size={18} />} badge="AI">Analyze & Split</Button>
+                    <Button onClick={() => setShowSourcePrompt(true)} variant="secondary" size="md" icon={<Video size={18} />} badge="AI">Generate Video</Button>
                   </motion.div>
                 )}
               </div>

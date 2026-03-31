@@ -6,6 +6,7 @@ import {
 import { IconButton } from '../ui/Button';
 import { Timer } from '../ui/Timer';
 import { CroppedImage, AnimationPreset } from '../../types';
+import { PROMPT_PRESETS } from '../../services/gemini';
 
 interface BentoItemProps {
   crop: CroppedImage;
@@ -108,27 +109,41 @@ export const BentoItem: React.FC<BentoItemProps> = React.memo(({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="w-full px-6"
+                className="w-full px-4"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="glass p-2 rounded-2xl flex gap-2 border-border shadow-2xl">
-                  <input 
-                    type="text"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Animation prompt..."
-                    className="flex-1 bg-transparent border-none outline-none text-xs text-ink placeholder:text-muted px-3"
-                    autoFocus
-                  />
-                  <IconButton 
-                    onClick={handleAnimate}
-                    icon={<Play size={14} />}
-                    variant="primary"
-                  />
-                  <IconButton 
-                    onClick={() => setShowPromptInput(false)}
-                    icon={<X size={14} />}
-                  />
+                <div className="flex flex-col gap-2">
+                  <div className="glass p-2 rounded-2xl flex gap-2 border-border shadow-2xl">
+                    <input 
+                      type="text"
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Animation prompt..."
+                      className="flex-1 bg-transparent border-none outline-none text-[10px] text-ink placeholder:text-muted px-3"
+                      autoFocus
+                    />
+                    <IconButton 
+                      onClick={handleAnimate}
+                      icon={<Play size={14} />}
+                      variant="primary"
+                    />
+                    <IconButton 
+                      onClick={() => setShowPromptInput(false)}
+                      icon={<X size={14} />}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 justify-center">
+                    {PROMPT_PRESETS.map(preset => (
+                      <button
+                        key={preset.id}
+                        onClick={() => setPrompt(preset.prompt)}
+                        className="px-2 py-1 rounded-lg bg-bg/40 backdrop-blur-3xl border border-border text-[8px] font-bold uppercase tracking-wider text-ink hover:bg-ink hover:text-bg transition-all"
+                        title={preset.prompt}
+                      >
+                        {preset.name.split(' ')[0]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             ) : showRemotionPresets ? (
@@ -166,17 +181,18 @@ export const BentoItem: React.FC<BentoItemProps> = React.memo(({
               <div className="flex gap-4">
                 {crop.upscaledUrl && !crop.isAnimating && !crop.videoUrl && (
                   <>
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                    <IconButton
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowPromptInput(true);
                       }}
-                      className="w-12 h-12 rounded-full bg-ink text-bg hover:scale-105 transition-all shadow-2xl flex items-center justify-center"
-                    >
-                      <Video size={18} strokeWidth={1.5} />
-                    </motion.button>
+                      icon={<Video size={18} strokeWidth={1.5} />}
+                      variant="primary"
+                      className="w-12 h-12"
+                      badge="AI"
+                      badgeVariant="gemini"
+                      title="Generate Video"
+                    />
 
                     <motion.button
                       initial={{ opacity: 0 }}
@@ -225,6 +241,7 @@ export const BentoItem: React.FC<BentoItemProps> = React.memo(({
               onClick={() => onUpscale(crop.id)}
               icon={<Maximize2 size={16} strokeWidth={1.5} />}
               title="Upscale to 4K"
+              badge="AI"
               size="sm"
             />
           )}

@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Timer } from '../ui/Timer';
+import { TokenCounter } from '../features/TokenCounter';
 
 interface HeaderProps {
   onReset: () => void;
@@ -52,6 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
                   disabled={isUpscalingSource}
                   variant="secondary"
                   size="sm"
+                  badge="AI"
                   icon={isUpscalingSource ? <Loader2 className="animate-spin" size={16} /> : <Maximize2 size={16} strokeWidth={1.5} />}
                 >
                   {isUpscalingSource ? (
@@ -66,6 +68,8 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={onFrameAnimateClick}
                   variant="secondary"
                   size="sm"
+                  badge="AI"
+                  badgeVariant="gemini"
                   icon={<Video size={16} strokeWidth={1.5} />}
                 >
                   Frame Animation
@@ -79,6 +83,8 @@ export const Header: React.FC<HeaderProps> = ({
                 disabled={isCreatingFullVideo}
                 variant="primary"
                 size="sm"
+                badge="AI"
+                badgeVariant="gemini"
                 icon={isCreatingFullVideo ? <Loader2 className="animate-spin" size={16} /> : <Film size={16} strokeWidth={1.5} />}
               >
                 {isCreatingFullVideo ? (
@@ -93,6 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
+          <TokenCounter />
         </div>
       </div>
     </header>

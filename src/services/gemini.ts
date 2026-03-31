@@ -15,6 +15,29 @@ export interface AISuggestion {
   prompt: string;
 }
 
+export const tokenUsage = {
+  totalTokens: 0,
+  promptTokens: 0,
+  completionTokens: 0,
+};
+
+const updateTokenUsage = (response: any) => {
+  if (response.usageMetadata) {
+    tokenUsage.promptTokens += response.usageMetadata.promptTokenCount || 0;
+    tokenUsage.completionTokens += response.usageMetadata.candidatesTokenCount || 0;
+    tokenUsage.totalTokens += response.usageMetadata.totalTokenCount || 0;
+    
+    // Dispatch a custom event for UI updates if needed
+    window.dispatchEvent(new CustomEvent('token-update', { detail: tokenUsage }));
+  }
+};
+
+export const PROMPT_PRESETS = [
+  { id: 'subtle', name: 'Subtle cinematic scene', prompt: 'A subtle cinematic scene with professional lighting, slow camera movement, and high aesthetic quality.' },
+  { id: 'dynamic', name: 'Dynamic transition', prompt: 'A dynamic cinematic transition with energy, fluid motion, and vibrant atmosphere.' },
+  { id: 'atmospheric', name: 'Atmospheric depth', prompt: 'Deep atmospheric cinematic vision with moody lighting, particles, and ethereal feel.' }
+];
+
 const getAI = () => {
   // Use ONLY the environment provided key (GEMINI_API_KEY) as requested.
   // This bypasses the AI Studio platform modal and uses the 'env backend' key.
@@ -189,6 +212,7 @@ export const generateFullVideo = async (
     ],
   });
 
+  updateTokenUsage(analysisResponse);
   const finalVideoPrompt = analysisResponse.text || "A cinematic sequence transitioning through various artistic scenes with professional lighting and camera work.";
 
   // 2. Generate the video using the intelligent prompt
@@ -271,6 +295,8 @@ export const detectGridItems = async (base64Image: string): Promise<BoundingBox[
       },
     },
   });
+
+  updateTokenUsage(response);
 
   try {
     return JSON.parse(response.text || "[]");
@@ -356,6 +382,8 @@ export const suggestAIFirst = async (images: { id: string, url: string }[]): Pro
       },
     },
   });
+
+  updateTokenUsage(response);
 
   try {
     return JSON.parse(response.text || "[]");

@@ -73,6 +73,8 @@ export const BatchToolbar: React.FC<BatchToolbarProps> = ({
               onClick={onAISuggest}
               disabled={isAISuggesting}
               icon={<Wand2 size={18} className={isAISuggesting ? "animate-pulse" : ""} />}
+              badge="AI"
+              badgeVariant="gemini"
               title="AI Suggest"
             />
             
@@ -81,6 +83,7 @@ export const BatchToolbar: React.FC<BatchToolbarProps> = ({
             <IconButton 
               onClick={onBatchUpscale}
               icon={<Maximize2 size={18} strokeWidth={1} />}
+              badge="AI"
               title="Upscale"
             />
             <IconButton 

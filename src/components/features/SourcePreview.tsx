@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ZoomIn, Layers, Video, Send, Play } from 'lucide-react';
+import { ZoomIn, Layers, Video, Send, Play, Sparkles } from 'lucide-react';
+import { Button, IconButton } from '../ui/Button';
 import { Timer } from '../ui/Timer';
 import { AnimationPreset } from '../../types';
+import { PROMPT_PRESETS } from '../../services/gemini';
 
 interface SourcePreviewProps {
   sourceImage: string;
@@ -74,29 +76,50 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
 
       <AnimatePresence>
         {showPrompt && !isAnimating && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="glass p-2 rounded-[2.5rem] flex items-center gap-2 shadow-2xl max-w-2xl mx-auto w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <input 
-              autoFocus
-              type="text"
-              value={prompt}
-              onChange={(e) => onPromptChange(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && onAnimate()}
-              placeholder="Describe the cinematic vision..."
-              className="flex-1 bg-transparent border-none outline-none text-sm px-6 py-3 text-ink placeholder:text-muted"
-            />
-            <button 
-              onClick={onAnimate}
-              className="p-4 rounded-full bg-ink text-bg hover:opacity-90 transition-all active:scale-95 shadow-xl"
+          <div className="flex flex-col gap-4 items-center w-full">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="glass p-2 rounded-[2.5rem] flex items-center gap-2 shadow-2xl max-w-2xl mx-auto w-full"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Send size={18} />
-            </button>
-          </motion.div>
+              <input 
+                autoFocus
+                type="text"
+                value={prompt}
+                onChange={(e) => onPromptChange(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && onAnimate()}
+                placeholder="Describe the cinematic vision..."
+                className="flex-1 bg-transparent border-none outline-none text-sm px-6 py-3 text-ink placeholder:text-muted"
+              />
+              <IconButton 
+                onClick={onAnimate}
+                variant="primary"
+                badge="AI"
+                badgeVariant="gemini"
+                icon={<Send size={18} />}
+                className="p-4"
+                title="Generate Video"
+              />
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-wrap gap-2 justify-center"
+            >
+              {PROMPT_PRESETS.map(preset => (
+                <button
+                  key={preset.id}
+                  onClick={() => onPromptChange(preset.prompt)}
+                  className="px-4 py-2 rounded-full bg-glass border border-border text-[10px] font-bold uppercase tracking-widest text-ink/60 hover:text-ink hover:bg-glass-muted transition-all flex items-center gap-2"
+                >
+                  <Sparkles size={12} className="text-ink/20" />
+                  {preset.name}
+                </button>
+              ))}
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
