@@ -208,9 +208,11 @@ export async function renderComposition(
     fastStart: 'in-memory',
   });
 
+  let encoderError: Error | null = null;
+
   const videoEncoder = new VideoEncoder({
     output: (chunk, metadata) => muxer.addVideoChunk(chunk, metadata),
-    error: (e) => { throw e; },
+    error: (e) => { encoderError = e; },
   });
 
   videoEncoder.configure({
@@ -226,6 +228,11 @@ export async function renderComposition(
     if (callbacks.signal.aborted) {
       videoEncoder.close();
       throw new DOMException('Render cancelled', 'AbortError');
+    }
+
+    if (encoderError) {
+      videoEncoder.close();
+      throw encoderError;
     }
 
     ctx.fillStyle = '#000000';
@@ -259,6 +266,11 @@ export async function renderComposition(
     callbacks.onProgress((frame / totalFrames) * 100);
 
     if (frame % 5 === 0) await new Promise(r => requestAnimationFrame(r));
+  }
+
+  if (encoderError) {
+    videoEncoder.close();
+    throw encoderError;
   }
 
   await videoEncoder.flush();
