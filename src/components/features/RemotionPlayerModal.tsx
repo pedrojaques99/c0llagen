@@ -33,11 +33,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
   if (!isOpen) return null;
 
   const handleExport = async () => {
-    if (!playerRef.current || !wrapperRef.current) return;
-    
-    const canvas = wrapperRef.current.querySelector('canvas');
-    if (!canvas) {
-      console.error("Could not find player canvas");
+    if (typeof VideoEncoder === 'undefined') {
       setExportStatus('error');
       return;
     }
@@ -54,7 +50,23 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
     const height = 1080;
 
     try {
-      // 1. Initialize Muxer
+      // 1. Create a dedicated rendering canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) throw new Error("Failed to get canvas context");
+
+      // 2. Load the image
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = imageUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error("Failed to load image for rendering"));
+      });
+
+      // 3. Initialize Muxer
       const muxer = new Mp4Muxer.Muxer({
         target: new Mp4Muxer.ArrayBufferTarget(),
         video: {
@@ -65,7 +77,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
         fastStart: 'in-memory'
       });
 
-      // 2. Initialize VideoEncoder
+      // 4. Initialize VideoEncoder
       const videoEncoder = new VideoEncoder({
         output: (chunk, metadata) => muxer.addVideoChunk(chunk, metadata),
         error: (e) => {
@@ -75,34 +87,82 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
       });
 
       videoEncoder.configure({
-        codec: 'avc1.42E01E', // Baseline profile for compatibility
+        codec: 'avc1.42E01E',
         width,
         height,
-        bitrate: 5_000_000, // 5 Mbps
+        bitrate: 8_000_000,
         framerate: fps
       });
 
-      // 3. Render Loop
+      // 5. Render Loop
       for (let i = 0; i < totalFrames; i++) {
-        // Seek to frame
-        playerRef.current.seekTo(i);
+        // Clear canvas
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, width, height);
+
+        // Calculate Animation Values (matching RemotionComposition logic)
+        let scale = 1;
+        let translateX = 0;
+        let opacity = 1;
+
+        // Simple interpolation logic
+        const progress = i / totalFrames;
         
-        // Wait for render (small delay to ensure canvas is updated)
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // Capture frame
+        switch (preset) {
+          case 'zoom-in':
+            scale = 1 + (0.2 * progress);
+            break;
+          case 'zoom-out':
+            scale = 1.2 - (0.2 * progress);
+            break;
+          case 'pan-lr':
+            scale = 1.1;
+            translateX = -5 + (10 * progress);
+            break;
+          case 'pan-rl':
+            scale = 1.1;
+            translateX = 5 - (10 * progress);
+            break;
+          case 'fade-in':
+            opacity = Math.min(i / 15, 1);
+            break;
+        }
+
+        // Draw Image with "Cover" logic and animation
+        const imgRatio = img.width / img.height;
+        const canvasRatio = width / height;
+        let drawWidth, drawHeight, offsetX, offsetY;
+
+        if (imgRatio > canvasRatio) {
+          drawHeight = height;
+          drawWidth = height * imgRatio;
+        } else {
+          drawWidth = width;
+          drawHeight = width / imgRatio;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.translate(width / 2, height / 2);
+        ctx.scale(scale, scale);
+        ctx.translate(translateX * (width / 100), 0);
+        ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        ctx.restore();
+
+        // Capture and Encode
         const frame = new VideoFrame(canvas, { timestamp: (i * 1_000_000) / fps });
-        
-        // Encode frame
         videoEncoder.encode(frame, { keyFrame: i % 30 === 0 });
         frame.close();
 
-        // Update progress
+        // Update UI
         setProgress((i / totalFrames) * 100);
         setElapsedTime((Date.now() - renderStartTime.current) / 1000);
+        
+        // Yield to main thread occasionally
+        if (i % 10 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
       }
 
-      // 4. Finalize
+      // 6. Finalize
       await videoEncoder.flush();
       muxer.finalize();
       
