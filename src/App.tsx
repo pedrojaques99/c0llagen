@@ -54,6 +54,10 @@ export default function App() {
   const [fullVideoStartTime, setFullVideoStartTime] = useState<number | null>(null);
   const [batchRenderItems, setBatchRenderItems] = useState<{ id: string, url: string, preset: AnimationPreset }[]>([]);
   const [isBatchRenderOpen, setIsBatchRenderOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const [uploadStartTime, setUploadStartTime] = useState<number | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { theme, toggleTheme } = useTheme();
@@ -64,29 +68,34 @@ export default function App() {
 
 
   const processFiles = async (files: File[]) => {
-    if (files.length === 0) return;
+    const validFiles = files.filter(f => f.type.startsWith('image/'));
+    if (validFiles.length === 0) return;
 
-    if (files.length === 1 && !sourceImage && croppedImages.length === 0) {
+    setIsUploading(true);
+    setUploadProgress({ current: 0, total: validFiles.length });
+    setUploadStartTime(Date.now());
+    setUploadedFiles([]);
+
+    if (validFiles.length === 1 && !sourceImage && croppedImages.length === 0) {
       // Standard single image flow
-      const file = files[0];
-      if (!file.type.startsWith('image/')) {
-        setError("Please upload an image file.");
-        return;
-      }
+      const file = validFiles[0];
+      setUploadedFiles([file.name]);
       const reader = new FileReader();
       reader.onload = (event) => {
         setSourceImage(event.target?.result as string);
         setCroppedImages([]);
         setSelectedIds(new Set());
         setError(null);
+        setIsUploading(false);
       };
       reader.readAsDataURL(file);
     } else {
       // Batch mode: add directly to grid
       const newItems: CroppedImage[] = [];
       
-      for (const file of files) {
-        if (!file.type.startsWith('image/')) continue;
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
+        setUploadProgress({ current: i + 1, total: validFiles.length });
         
         const dataUrl = await new Promise<string>((resolve) => {
           const reader = new FileReader();
@@ -100,6 +109,9 @@ export default function App() {
           isUpscaling: false,
           isAnimating: false
         });
+        
+        // Add to uploaded list for feedback
+        setUploadedFiles(prev => [...prev, file.name]);
       }
 
       if (newItems.length > 0) {
@@ -114,8 +126,9 @@ export default function App() {
 
         setCroppedImages(prev => [...prev, ...newItems]);
         setError(null);
-        handleAISuggest(newItems);
+        await handleAISuggest(newItems);
       }
+      setIsUploading(false);
     }
   };
 
@@ -590,6 +603,201 @@ export default function App() {
         onFrameAnimateClick={() => setShowFrameModal(true)}
         sourceImage={sourceImage}
         hasCroppedImages={croppedImages.length > 0}
+const suggestions = await suggestAIFirst(targets.map(t => ({ id: t.id, url: t.url })));
+      
+      setCroppedImages(prev => prev.map(crop => {
+        const suggestion = suggestions.find(s => s.id === crop.id);
+        if (suggestion) {
+          return {
+            ...crop,
+            animationPrompt: suggestion.prompt,
+            suggestedPreset: suggestion.preset as AnimationPreset
+          };
+        }
+        return crop;
+      }));
+    } catch (err) {
+      console.error("AI Suggestion failed", err);
+    } finally {
+      setIsAISuggesting(false);
+    }
+  };
+
+  const handleBatchUpscale = async () => {
+    const selected = Array.from(selectedIds) as string[];
+    for (const id of selected) {
+      await handleUpscale(id);
+    }
+  };
+
+  const handleBatchRemove = () => {
+    const selected = Array.from(selectedIds) as string[];
+    selected.forEach(id => removeImage(id));
+    setSelectedIds(new Set());
+  };
+
+  const getImageDimensions = (url: string): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.width, height: img.height });
+      img.onerror = () => resolve({ width: 1920, height: 1080 });
+      img.src = url;
+    });
+  };
+
+  const handleBatchRemotion = async (preset: AnimationPreset) => {
+    const selected = Array.from(selectedIds);
+    const targetCrops = selected.length > 0
+      ? croppedImages.filter(c => selectedIds.has(c.id))
+      : croppedImages;
+
+    if (targetCrops.length === 1) {
+      const crop = targetCrops[0];
+      const url = crop.upscaledUrl || crop.url;
+      const dims = await getImageDimensions(url);
+      setRemotionData({
+        slides: [{ imageUrl: url, preset, durationInSeconds: 5, ...dims }],
+      });
+    } else {
+      const slides: RenderSlide[] = await Promise.all(
+        targetCrops.map(async (c) => {
+          const url = c.upscaledUrl || c.url;
+          const dims = await getImageDimensions(url);
+          return {
+            imageUrl: url,
+            preset: c.suggestedPreset || preset,
+            durationInSeconds: 5,
+            ...dims,
+          };
+        })
+      );
+      setRemotionData({ slides, transition: 'fade' });
+    }
+  };
+
+  const removeImage = (id: string) => {
+    revokeThumbnail(id);
+    setCroppedImages(prev => prev.filter(c => c.id !== id));
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    setSelectedIds(new Set(croppedImages.map(c => c.id)));
+  };
+
+  const downloadImage = async (url: string, filename: string) => {
+    if (directoryHandle) {
+      try {
+        const permission = await directoryHandle.queryPermission({ mode: 'readwrite' });
+        if (permission !== 'granted') {
+          const newPermission = await directoryHandle.requestPermission({ mode: 'readwrite' });
+          if (newPermission !== 'granted') throw new Error("Permission denied");
+        }
+
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err) {
+        console.error("Directory save failed, falling back to standard download", err);
+        setDirectoryHandle(null);
+      }
+    }
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const selectFolder = async () => {
+    try {
+      if (!('showDirectoryPicker' in window)) {
+        setError("Your browser doesn't support direct folder access. Downloads will proceed individually.");
+        return null;
+      }
+      const handle = await window.showDirectoryPicker({
+        mode: 'readwrite'
+      });
+      setDirectoryHandle(handle);
+      return handle;
+    } catch (err) {
+      console.error("Folder selection cancelled or failed", err);
+      return null;
+    }
+  };
+
+  const downloadAll = async () => {
+    const imagesToDownload = selectedIds.size > 0 
+      ? croppedImages.filter(c => selectedIds.has(c.id))
+      : croppedImages;
+
+    if (imagesToDownload.length === 0) return;
+
+    let currentHandle = directoryHandle;
+    
+    if (imagesToDownload.length > 1 && !currentHandle && 'showDirectoryPicker' in window) {
+      const confirmFolder = window.confirm("Would you like to select a destination folder to save all images at once? (Recommended for batch)");
+      if (confirmFolder) {
+        currentHandle = await selectFolder();
+      }
+    }
+
+    for (let idx = 0; idx < imagesToDownload.length; idx++) {
+      const crop = imagesToDownload[idx];
+      const filename = `bento-item-${idx + 1}${crop.upscaledUrl ? '-4k' : ''}.jpg`;
+      
+      if (currentHandle) {
+        await downloadImage(crop.upscaledUrl || crop.url, filename);
+      } else {
+        setTimeout(() => {
+          downloadImage(crop.upscaledUrl || crop.url, filename);
+        }, idx * 300);
+      }
+    }
+  };
+
+  const handleReset = () => {
+    croppedImages.forEach(c => revokeThumbnail(c.id));
+    setSourceImage(null);
+    setCroppedImages([]);
+    setSelectedIds(new Set());
+    setError(null);
+    setShowSourcePrompt(false);
+    setSourcePrompt("");
+  };
+
+
+
+  return (
+    <RenderQueueProvider>
+    <div className="min-h-screen bg-bg text-white selection:bg-white selection:text-black">
+      <Header 
+        onReset={handleReset}
+        onUpscaleSourceClick={handleUpscaleSource}
+        isUpscalingSource={isUpscalingSource}
+        upscaleStartTime={upscaleStartTime}
+        onFrameAnimateClick={() => setShowFrameModal(true)}
+        sourceImage={sourceImage}
+        hasCroppedImages={croppedImages.length > 0}
         onCreateFullVideo={handleCreateFullVideo}
         isCreatingFullVideo={isCreatingFullVideo}
         fullVideoStartTime={fullVideoStartTime}
@@ -797,8 +1005,76 @@ export default function App() {
         items={batchRenderItems}
       />
 
+      {/* Upload & AI Feedback Toast */}
+      <AnimatePresence>
+        {(isUploading || isAISuggesting) && (
+          <motion.div
+            initial={{ opacity: 0, y: 100, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 0.9 }}
+            className="fixed bottom-32 right-10 z-[60] flex flex-col gap-2 pointer-events-none"
+          >
+            <div className="bg-bg/80 glass border border-border px-4 py-3 rounded-2xl flex items-center gap-4 shadow-2xl backdrop-blur-xl pointer-events-auto">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full border-2 border-border border-t-ink/30 animate-spin flex items-center justify-center">
+                <span className="text-[10px] font-mono text-ink">
+                  {uploadProgress.total > 0 ? Math.round((uploadProgress.current / uploadProgress.total) * 100) : '...'}
+                </span>
+              </div>
+              
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-ink">
+                  {isUploading ? 'Uploading Media' : 'Analyzing Content'}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-mono text-muted">
+                    {isUploading 
+                      ? `${uploadProgress.current}/${uploadProgress.total} Files`
+                      : 'AI Analysis in progress'}
+                  </span>
+                  {uploadStartTime && (
+                    <LiveTimer startTime={uploadStartTime} />
+                  )}
+                </div>
+              </div>
+
+              {uploadedFiles.length > 0 && isUploading && (
+                <div className="flex items-center gap-1 border-l border-border pl-4 max-w-[150px] overflow-hidden">
+                  <div className="flex -space-x-2">
+                    {uploadedFiles.slice(-3).map((name, i) => (
+                      <div key={i} className="w-5 h-5 rounded-md bg-ink/10 border border-bg flex items-center justify-center text-[8px] truncate px-0.5 text-muted">
+                        {name.charAt(0)}
+                      </div>
+                    ))}
+                  </div>
+                  {uploadedFiles.length > 3 && (
+                    <span className="text-[9px] text-muted">+{uploadedFiles.length - 3}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <RenderToast />
     </div>
     </RenderQueueProvider>
   );
 }
+
+const LiveTimer: React.FC<{ startTime: number }> = ({ startTime }) => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - startTime);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  return (
+    <span className="text-[9px] font-mono text-ink/20">
+      {(elapsed / 1000).toFixed(1)}s
+    </span>
+  );
+};
