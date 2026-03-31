@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { X, Scissors, Video, Sparkles, Loader2 } from 'lucide-react';
+import { X, Scissors, Video } from 'lucide-react';
 import { detectGridItems, upscaleImage, generateVideo, generateVideoWithFrames, generateFullVideo, suggestAIFirst } from './services/gemini';
-import { CroppedImage, AnimationPreset, RenderSlide, TransitionType, RenderComposition } from './types';
+import { CroppedImage, AnimationPreset, RenderSlide, TransitionType } from './types';
 import { RenderQueueProvider } from './hooks/useRenderQueue';
 import { RenderToast } from './components/features/RenderToast';
 import { Button, IconButton } from './components/ui/Button';
@@ -16,7 +16,6 @@ import { BentoItem } from './components/features/BentoItem';
 import { FrameAnimateModal } from './components/features/FrameAnimateModal';
 import { RemotionPlayerModal } from './components/features/RemotionPlayerModal';
 import { BatchToolbar } from './components/features/BatchToolbar';
-import { BatchRenderModal } from './components/features/BatchRenderModal';
 import { generateThumbnail, revokeThumbnail } from './utils/thumbnail';
 
 declare global {
@@ -54,8 +53,6 @@ export default function App() {
   const [animationStartTime, setAnimationStartTime] = useState<number | null>(null);
   const [upscaleStartTime, setUpscaleStartTime] = useState<number | null>(null);
   const [fullVideoStartTime, setFullVideoStartTime] = useState<number | null>(null);
-  const [batchRenderItems, setBatchRenderItems] = useState<{ id: string, url: string, preset: AnimationPreset }[]>([]);
-  const [isBatchRenderOpen, setIsBatchRenderOpen] = useState(false);
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
@@ -488,7 +485,6 @@ export default function App() {
         <RemotionPlayerModal isOpen={!!remotionData} onClose={() => setRemotionData(null)} name={remotionData?.name} thumbnailUrl={remotionData?.thumbnailUrl}
           imageUrl={remotionData?.slides?.[0]?.imageUrl || ''} preset={remotionData?.slides?.[0]?.preset || 'zoom-in'}
           slides={remotionData?.slides} transition={remotionData?.transition} />
-        <BatchRenderModal isOpen={isBatchRenderOpen} onClose={() => setIsBatchRenderOpen(false)} items={batchRenderItems} />
         
         <AnimatePresence>
           {(isUploading || isAISuggesting) && (

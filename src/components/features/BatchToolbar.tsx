@@ -40,28 +40,28 @@ export const BatchToolbar: React.FC<BatchToolbarProps> = ({
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50"
+          className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 w-full max-w-[1400px] px-8 flex justify-center pointer-events-none"
         >
-          <div className="glass px-8 py-4 rounded-[3rem] border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.6)] flex items-center gap-8 min-w-[600px] backdrop-blur-3xl">
-            <div className="flex items-center gap-4 pr-8 border-r border-white/10">
-              <div className="w-10 h-10 rounded-2xl bg-white text-black flex items-center justify-center font-bold text-sm">
+          <div className="glass px-8 py-4 rounded-[3rem] border border-border shadow-[0_20px_60px_rgba(0,0,0,0.6)] flex items-center gap-8 backdrop-blur-3xl pointer-events-auto">
+            <div className="flex items-center gap-4 pr-8 border-r border-border">
+              <div className="w-10 h-10 rounded-2xl bg-ink text-bg flex items-center justify-center font-bold text-sm">
                 {selectedCount}
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Selected</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Selected</span>
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={onClearSelection}
-                    className="text-[10px] font-bold uppercase tracking-widest text-white hover:text-white/60 transition-colors flex items-center gap-1"
+                    className="text-[10px] font-bold uppercase tracking-widest text-ink hover:opacity-60 transition-colors flex items-center gap-1"
                   >
                     Clear <X size={10} />
                   </button>
                   {selectedCount < totalCount && (
                     <button 
                       onClick={onSelectAll}
-                      className="text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors"
+                      className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 hover:text-emerald-400 transition-colors"
                     >
-                      Select All
+                      All
                     </button>
                   )}
                 </div>
@@ -76,7 +76,7 @@ export const BatchToolbar: React.FC<BatchToolbarProps> = ({
               title="AI Suggest"
             />
             
-            <div className="h-8 w-[1px] bg-white/10 mx-2" />
+            <div className="h-8 w-[1px] bg-border mx-2" />
 
             <IconButton 
               onClick={onBatchUpscale}
@@ -89,21 +89,21 @@ export const BatchToolbar: React.FC<BatchToolbarProps> = ({
               title="Download"
             />
             
-            <div className="h-8 w-[1px] bg-white/10 mx-2" />
+            <div className="h-8 w-[1px] bg-border mx-2" />
 
-            <div className="flex items-center gap-1 bg-white/5 p-1 rounded-2xl">
+            <div className="flex items-center gap-1 bg-glass-muted p-1 rounded-2xl border border-border">
               {(['zoom-in', 'zoom-out', 'pan-lr', 'pan-rl', 'fade-in'] as AnimationPreset[]).map(preset => (
                 <button
                   key={preset}
                   onClick={() => onBatchRemotion(preset)}
-                  className="px-3 py-2 rounded-xl hover:bg-white hover:text-black transition-all text-[8px] font-bold uppercase tracking-widest"
+                  className="px-3 py-2 rounded-xl hover:bg-ink hover:text-bg transition-all text-[8px] font-bold uppercase tracking-widest text-ink"
                 >
                   {preset.split('-')[0]}
                 </button>
               ))}
             </div>
 
-            <div className="h-8 w-[1px] bg-white/10 mx-2" />
+            <div className="h-8 w-[1px] bg-border mx-2" />
 
             <IconButton 
               onClick={onBatchRemove}

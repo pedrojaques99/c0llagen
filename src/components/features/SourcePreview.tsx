@@ -32,29 +32,29 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
   onFullscreen,
 }) => {
   return (
-    <div className="flex flex-col gap-6 border-[4.11111px] px-[30px] py-[10px] rounded-[10px] border-solid border-white/10">
+    <div className="flex flex-col gap-6 p-1 rounded-3xl">
       <motion.div 
         key="preview"
         initial={{ opacity: 0, scale: 0.98, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative group rounded-[3rem] overflow-hidden glass cursor-zoom-in shadow-2xl"
+        className="relative group rounded-[3rem] overflow-hidden glass cursor-zoom-in shadow-2xl border border-border"
         onClick={() => !showPrompt && onFullscreen(sourceImage)}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg/20 pointer-events-none" />
         <img src={sourceImage} alt="Source" className="w-full object-contain max-h-[75vh] transition-transform duration-1000 group-hover:scale-[1.02]" loading="lazy" />
         
         {!isAnalyzing && !isAnimating && !showPrompt && (
-          <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-all duration-500 flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <div className="p-6 rounded-full bg-white/10 backdrop-blur-2xl text-white border border-white/20 shadow-2xl scale-90 group-hover:scale-100 transition-transform duration-500">
+          <div className="absolute inset-0 bg-transparent group-hover:bg-ink/5 transition-all duration-500 flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <div className="p-6 rounded-full bg-glass backdrop-blur-3xl text-ink border border-border shadow-2xl scale-90 group-hover:scale-100 transition-transform duration-500">
               <ZoomIn size={32} strokeWidth={1.5} />
             </div>
           </div>
         )}
 
         {isAnalyzing && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md flex flex-col items-center justify-center gap-6">
+          <div className="absolute inset-0 bg-bg/40 backdrop-blur-md flex flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/80">
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-muted">
                 {analysisStartTime && <Timer startTime={analysisStartTime} />} Analyzing
               </span>
             </div>
@@ -62,9 +62,9 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
         )}
 
         {isAnimating && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md flex flex-col items-center justify-center gap-6">
+          <div className="absolute inset-0 bg-bg/40 backdrop-blur-md flex flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-white/80">
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-muted">
                 {animationStartTime && <Timer startTime={animationStartTime} />} Animating
               </span>
             </div>
@@ -78,7 +78,7 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="glass p-2 rounded-[2rem] flex items-center gap-2 shadow-2xl max-w-2xl mx-auto w-full border-white/10"
+            className="glass p-2 rounded-[2.5rem] flex items-center gap-2 shadow-2xl max-w-2xl mx-auto w-full"
             onClick={(e) => e.stopPropagation()}
           >
             <input 
@@ -88,11 +88,11 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
               onChange={(e) => onPromptChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onAnimate()}
               placeholder="Describe the cinematic vision..."
-              className="flex-1 bg-transparent border-none outline-none text-sm px-6 py-3 text-white placeholder:text-white/20"
+              className="flex-1 bg-transparent border-none outline-none text-sm px-6 py-3 text-ink placeholder:text-muted"
             />
             <button 
               onClick={onAnimate}
-              className="p-4 rounded-full bg-white text-black hover:bg-white/90 transition-all active:scale-95 shadow-xl"
+              className="p-4 rounded-full bg-ink text-bg hover:opacity-90 transition-all active:scale-95 shadow-xl"
             >
               <Send size={18} />
             </button>
@@ -104,7 +104,7 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center justify-center gap-1 bg-white/5 p-1 rounded-2xl max-w-fit mx-auto"
+          className="flex items-center justify-center gap-1 bg-glass-muted p-1 rounded-2xl max-w-fit mx-auto border border-border"
         >
           {(['zoom-in', 'zoom-out', 'pan-lr', 'pan-rl', 'fade-in'] as AnimationPreset[]).map(preset => (
             <button
@@ -113,7 +113,7 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
                 e.stopPropagation();
                 onRemotionAnimate(preset);
               }}
-              className="px-3 py-2 rounded-xl hover:bg-white hover:text-black transition-all text-[8px] font-bold uppercase tracking-widest"
+              className="px-4 py-2 rounded-xl hover:bg-ink hover:text-bg transition-all text-[9px] font-bold uppercase tracking-widest text-ink"
             >
               {preset.replace('-', ' ')}
             </button>

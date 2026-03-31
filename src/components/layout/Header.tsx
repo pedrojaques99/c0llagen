@@ -1,7 +1,6 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { 
-  Sparkles, Video, Maximize2, Film, Loader2
+  Video, Maximize2, Film, Loader2
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Timer } from '../ui/Timer';
@@ -33,16 +32,16 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-8 py-6">
-      <div className="max-w-[1400px] mx-auto flex items-center justify-between glass px-8 py-4 rounded-[2.5rem] border-white/20 shadow-2xl backdrop-blur-3xl">
+      <div className="max-w-[1400px] mx-auto flex items-center justify-between glass px-8 py-4 rounded-[2.5rem] border border-border shadow-2xl backdrop-blur-3xl">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={onReset}>
             <div className="flex flex-col">
-              <h1 className="text-lg font-bold tracking-tight text-white leading-none">C0LLAGEN</h1>
+              <h1 className="text-lg font-bold tracking-tight text-ink leading-none">C0LLAGEN</h1>
             </div>
           </div>
 
           {sourceImage && (
-            <div className="h-8 w-[1px] bg-white/10" />
+            <div className="h-8 w-[1px] bg-border" />
           )}
 
           <div className="flex items-center gap-3">
