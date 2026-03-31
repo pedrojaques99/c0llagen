@@ -1,0 +1,5 @@
+{
+  "name": "Bento Splitter & Upscaler",
+  "description": "An essentialist tool to automatically split grid moodboards and upscale individual images using Gemini Nano Banana.",
+  "requestFramePermissions": []
+}

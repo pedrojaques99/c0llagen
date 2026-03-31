@@ -1,0 +1,69 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-glass: var(--glass);
+  --color-primary: #ffffff;
+}
+
+:root {
+  --bg: #050505;
+  --ink: #ffffff;
+  --muted: #888888;
+  --border: rgba(255, 255, 255, 0.1);
+  --glass: rgba(255, 255, 255, 0.03);
+}
+
+.light {
+  --bg: #fafafa;
+  --ink: #171717;
+  --muted: #737373;
+  --border: #e5e5e5;
+  --glass: rgba(0, 0, 0, 0.02);
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans antialiased selection:bg-white selection:text-black;
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-sans tracking-tight font-semibold;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/[0.01] border border-white/5;
+  }
+
+  .glass-hover {
+    @apply hover:bg-white/5 transition-all duration-200;
+  }
+
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+.markdown-body {
+  @apply text-sm leading-relaxed text-muted;
+}
+
+.markdown-body p {
+  @apply mb-4;
+}
+
+.markdown-body h1, .markdown-body h2 {
+  @apply text-ink font-serif mb-2 mt-6;
+}
