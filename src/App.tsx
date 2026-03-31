@@ -54,15 +54,8 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
-    const checkKey = async () => {
-      if (window.aistudio) {
-        const selected = await window.aistudio.hasSelectedApiKey();
-        setHasApiKey(selected);
-      } else {
-        setHasApiKey(true);
-      }
-    };
-    checkKey();
+    // Always bypass the API key modal and rely on the environment key
+    setHasApiKey(true);
   }, []);
 
   const handleSelectKey = async () => {

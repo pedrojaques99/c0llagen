@@ -87,7 +87,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
       });
 
       videoEncoder.configure({
-        codec: 'avc1.42E01E',
+        codec: 'avc1.640028',
         width,
         height,
         bitrate: 8_000_000,

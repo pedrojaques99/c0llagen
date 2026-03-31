@@ -2,10 +2,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { BoundingBox } from "../types";
 
 const CONFIG = {
-  GRID_MODEL: "gemini-3-flash-preview",
+  GEMINI_NANO_MODEL: "gemini-1.5-flash-8b", // Using Flash 8B as the Cloud equivalent for Gemini Nano
   UPSCALE_MODEL: "gemini-3.1-flash-image-preview",
   VIDEO_MODEL: "veo-3.1-lite-generate-preview",
-  VIDEO_PRO_MODEL: "veo-3.1-generate-preview",
+  VIDEO_PRO_MODEL: "veo-3.1-generate-preview", // Referred to as Veo 3
   DEFAULT_UPSCALE_SIZE: "4K" as const,
 };
 
@@ -16,9 +16,14 @@ export interface AISuggestion {
 }
 
 const getAI = () => {
-  // Priority: User-selected key (API_KEY) > Platform-provided key (GEMINI_API_KEY)
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("No API key available. Please select an API key.");
+  // Use ONLY the environment provided key (GEMINI_API_KEY) as requested.
+  // This bypasses the AI Studio platform modal and uses the 'env backend' key.
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not set in the environment.");
+  }
+  
   return new GoogleGenAI({ apiKey });
 };
 
@@ -166,7 +171,7 @@ export const generateFullVideo = async (
   Output ONLY the final video prompt text.`;
 
   const analysisResponse = await ai.models.generateContent({
-    model: CONFIG.GRID_MODEL,
+    model: CONFIG.GEMINI_NANO_MODEL,
     contents: [
       {
         parts: [
@@ -233,7 +238,7 @@ export const detectGridItems = async (base64Image: string): Promise<BoundingBox[
   Only return the JSON array.`;
 
   const response = await ai.models.generateContent({
-    model: CONFIG.GRID_MODEL,
+    model: CONFIG.GEMINI_NANO_MODEL,
     contents: [
       {
         parts: [
@@ -314,11 +319,12 @@ export const suggestAIFirst = async (images: { id: string, url: string }[]): Pro
   Available Remotion presets: "zoom-in", "zoom-out", "pan-lr", "pan-rl", "fade-in".
   Return a JSON array of objects, each with 'id', 'preset', and 'prompt'.
   The 'id' must match the provided image IDs.
-  The 'prompt' should be a detailed cinematic description for the Veo 3 model.
+  The 'prompt' should be a detailed cinematic description for the Veo 3 model, optimized for high-speed 'Banana Gen' style results.
+  Leverage Gemini Nano characteristics for precision in style detection.
   Only return the JSON array.`;
 
   const response = await ai.models.generateContent({
-    model: CONFIG.GRID_MODEL,
+    model: CONFIG.GEMINI_NANO_MODEL,
     contents: [
       {
         parts: [
