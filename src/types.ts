@@ -21,3 +21,46 @@ export interface BoundingBox {
   width: number;
   height: number;
 }
+
+export type ExportStatus = 'idle' | 'rendering' | 'completed' | 'error';
+
+export interface BatchRenderItem {
+  id: string;
+  url: string;
+  preset: AnimationPreset;
+  status: ExportStatus;
+  progress: number;
+  videoUrl?: string;
+  blob?: Blob;
+}
+
+export type TransitionType = 'fade' | 'slide' | 'wipe' | 'none';
+
+export interface RenderSlide {
+  imageUrl: string;
+  preset: AnimationPreset;
+  durationInSeconds: number;
+  width: number;
+  height: number;
+}
+
+export interface RenderComposition {
+  id: string;
+  slides: RenderSlide[];
+  fps: number;
+  transition: TransitionType;
+  transitionDurationFrames: number;
+}
+
+export type RenderJobStatus = 'queued' | 'rendering' | 'completed' | 'cancelled' | 'error';
+
+export interface RenderJob {
+  id: string;
+  composition: RenderComposition;
+  status: RenderJobStatus;
+  progress: number;
+  blob: Blob | null;
+  error: string | null;
+  startedAt: number | null;
+  completedAt: number | null;
+}
