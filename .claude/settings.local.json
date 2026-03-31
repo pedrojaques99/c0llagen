@@ -3,7 +3,9 @@
     "allow": [
       "mcp__claude_ai_Context7__resolve-library-id",
       "mcp__claude_ai_Context7__query-docs",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
