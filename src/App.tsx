@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { detectGridItems, upscaleImage, generateVideo, generateVideoWithFrames, generateFullVideo, suggestAIFirst } from './services/gemini';
-import { CroppedImage, AnimationPreset } from './types';
+import { CroppedImage, AnimationPreset, RenderSlide, TransitionType } from './types';
+import { RenderQueueProvider } from './hooks/useRenderQueue';
+import { RenderToast } from './components/features/RenderToast';
 import { Button, IconButton } from './components/ui/Button';
 import { Modal } from './components/ui/Modal';
 import { useTheme } from './hooks/useTheme';
@@ -35,7 +37,12 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
   const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
-  const [remotionData, setRemotionData] = useState<{ url: string, preset: AnimationPreset } | null>(null);
+  const [remotionData, setRemotionData] = useState<{
+    url?: string;
+    preset?: AnimationPreset;
+    slides?: RenderSlide[];
+    transition?: TransitionType;
+  } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAISuggesting, setIsAISuggesting] = useState(false);
   const [isAnimatingSource, setIsAnimatingSource] = useState(false);
@@ -410,25 +417,42 @@ export default function App() {
     setSelectedIds(new Set());
   };
 
-  const handleBatchRemotion = (preset: AnimationPreset) => {
-    const selected = Array.from(selectedIds);
-    if (selected.length === 0) return;
+  const getImageDimensions = (url: string): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.width, height: img.height });
+      img.onerror = () => resolve({ width: 1920, height: 1080 });
+      img.src = url;
+    });
+  };
 
-    if (selected.length === 1) {
-      const crop = croppedImages.find(c => c.id === selected[0]);
-      if (crop) setRemotionData({ url: crop.upscaledUrl || crop.url, preset });
+  const handleBatchRemotion = async (preset: AnimationPreset) => {
+    const selected = Array.from(selectedIds);
+    const targetCrops = selected.length > 0
+      ? croppedImages.filter(c => selectedIds.has(c.id))
+      : croppedImages;
+
+    if (targetCrops.length === 1) {
+      const crop = targetCrops[0];
+      const url = crop.upscaledUrl || crop.url;
+      const dims = await getImageDimensions(url);
+      setRemotionData({
+        slides: [{ imageUrl: url, preset, durationInSeconds: 5, ...dims }],
+      });
     } else {
-      // Batch mode: Open the sequential render modal
-      const itemsToRender = croppedImages
-        .filter(c => selectedIds.has(c.id))
-        .map(c => ({
-          id: c.id,
-          url: c.upscaledUrl || c.url,
-          preset: preset
-        }));
-      
-      setBatchRenderItems(itemsToRender);
-      setIsBatchRenderOpen(true);
+      const slides: RenderSlide[] = await Promise.all(
+        targetCrops.map(async (c) => {
+          const url = c.upscaledUrl || c.url;
+          const dims = await getImageDimensions(url);
+          return {
+            imageUrl: url,
+            preset: c.suggestedPreset || preset,
+            durationInSeconds: 5,
+            ...dims,
+          };
+        })
+      );
+      setRemotionData({ slides, transition: 'fade' });
     }
   };
 
@@ -543,6 +567,7 @@ export default function App() {
 
 
   return (
+    <RenderQueueProvider>
     <div className="min-h-screen bg-bg text-white selection:bg-white selection:text-black">
       <Header 
         onReset={handleReset}
@@ -608,7 +633,12 @@ export default function App() {
                 prompt={sourcePrompt}
                 onPromptChange={setSourcePrompt}
                 onAnimate={handleDirectAnimate}
-                onRemotionAnimate={(preset) => setRemotionData({ url: sourceImage, preset })}
+                onRemotionAnimate={async (preset) => {
+                  const dims = await getImageDimensions(sourceImage!);
+                  setRemotionData({
+                    slides: [{ imageUrl: sourceImage!, preset, durationInSeconds: 5, ...dims }],
+                  });
+                }}
                 analysisStartTime={analysisStartTime}
                 animationStartTime={animationStartTime}
                 onFullscreen={setFullscreenUrl}
@@ -681,7 +711,12 @@ export default function App() {
                   onRemove={removeImage}
                   onUpscale={handleUpscale}
                   onAnimate={handleAnimate}
-                  onRemotionAnimate={(url, preset) => setRemotionData({ url, preset })}
+                  onRemotionAnimate={async (url, preset) => {
+                    const dims = await getImageDimensions(url);
+                    setRemotionData({
+                      slides: [{ imageUrl: url, preset, durationInSeconds: 5, ...dims }],
+                    });
+                  }}
                   onDownload={downloadImage}
                   onFullscreen={setFullscreenUrl}
                   onViewVideo={setVideoModalUrl}
@@ -734,18 +769,23 @@ export default function App() {
         />
       )}
 
-      <RemotionPlayerModal 
+      <RemotionPlayerModal
         isOpen={!!remotionData}
         onClose={() => setRemotionData(null)}
-        imageUrl={remotionData?.url || ''}
-        preset={remotionData?.preset || 'zoom-in'}
+        imageUrl={remotionData?.slides?.[0]?.imageUrl || ''}
+        preset={remotionData?.slides?.[0]?.preset || 'zoom-in'}
+        slides={remotionData?.slides}
+        transition={remotionData?.transition}
       />
 
-      <BatchRenderModal 
+      <BatchRenderModal
         isOpen={isBatchRenderOpen}
         onClose={() => setIsBatchRenderOpen(false)}
         items={batchRenderItems}
       />
+
+      <RenderToast />
     </div>
+    </RenderQueueProvider>
   );
 }
