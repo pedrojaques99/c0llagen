@@ -3,6 +3,7 @@ export type AnimationPreset = 'zoom-in' | 'zoom-out' | 'pan-lr' | 'pan-rl' | 'fa
 export interface CroppedImage {
   id: string;
   url: string;
+  thumbnailUrl?: string;
   upscaledUrl?: string;
   isUpscaling: boolean;
   upscaleStartTime?: number;
@@ -42,6 +43,9 @@ export interface RenderSlide {
   durationInSeconds: number;
   width: number;
   height: number;
+  zoomScale?: number;
+  panAmount?: number;
+  speed?: number;
 }
 
 export interface RenderComposition {

@@ -18,6 +18,7 @@ import { FrameAnimateModal } from './components/features/FrameAnimateModal';
 import { RemotionPlayerModal } from './components/features/RemotionPlayerModal';
 import { BatchToolbar } from './components/features/BatchToolbar';
 import { BatchRenderModal } from './components/features/BatchRenderModal';
+import { generateThumbnail, revokeThumbnail } from './utils/thumbnail';
 
 declare global {
   interface Window {
@@ -102,9 +103,17 @@ export default function App() {
       }
 
       if (newItems.length > 0) {
+        // Generate optimized thumbnails in parallel
+        await Promise.all(
+          newItems.map(async (item) => {
+            try {
+              item.thumbnailUrl = await generateThumbnail(item.url, item.id);
+            } catch { /* fallback to full url */ }
+          })
+        );
+
         setCroppedImages(prev => [...prev, ...newItems]);
         setError(null);
-        // Automatically suggest prompts for the new batch
         handleAISuggest(newItems);
       }
     }
@@ -187,6 +196,15 @@ export default function App() {
           isAnimating: false
         });
       }
+
+      // Generate optimized thumbnails for crops
+      await Promise.all(
+        newCrops.map(async (item) => {
+          try {
+            item.thumbnailUrl = await generateThumbnail(item.url, item.id);
+          } catch { /* fallback to full url */ }
+        })
+      );
 
       setCroppedImages(newCrops);
       setSelectedIds(new Set());
@@ -450,6 +468,7 @@ export default function App() {
   };
 
   const removeImage = (id: string) => {
+    revokeThumbnail(id);
     setCroppedImages(prev => prev.filter(c => c.id !== id));
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -549,6 +568,7 @@ export default function App() {
   };
 
   const handleReset = () => {
+    croppedImages.forEach(c => revokeThumbnail(c.id));
     setSourceImage(null);
     setCroppedImages([]);
     setSelectedIds(new Set());

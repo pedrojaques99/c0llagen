@@ -42,7 +42,7 @@ export const BatchToolbar: React.FC<BatchToolbarProps> = ({
           exit={{ y: 100, opacity: 0 }}
           className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50"
         >
-          <div className="glass px-8 py-4 rounded-[3rem] border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-8 min-w-[600px]">
+          <div className="glass px-8 py-4 rounded-[3rem] border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.6)] flex items-center gap-8 min-w-[600px] backdrop-blur-3xl">
             <div className="flex items-center gap-4 pr-8 border-r border-white/10">
               <div className="w-10 h-10 rounded-2xl bg-white text-black flex items-center justify-center font-bold text-sm">
                 {selectedCount}

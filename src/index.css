@@ -42,7 +42,7 @@
 
 @layer components {
   .glass {
-    @apply bg-white/[0.01] border border-white/5;
+    @apply bg-white/[0.03] border border-white/10 backdrop-blur-2xl backdrop-saturate-150 shadow-2xl;
   }
 
   .glass-hover {
@@ -66,4 +66,26 @@
 
 .markdown-body h1, .markdown-body h2 {
   @apply text-ink font-serif mb-2 mt-6;
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+input[type='range'] {
+  @apply accent-white;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  @apply bg-white/10 rounded-full h-1;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  @apply appearance-none w-3 h-3 bg-white rounded-full -mt-1 shadow-lg hover:scale-125 transition-transform;
 }

@@ -21,7 +21,7 @@ interface BentoItemProps {
   onViewVideo: (url: string) => void;
 }
 
-export const BentoItem: React.FC<BentoItemProps> = ({
+export const BentoItem: React.FC<BentoItemProps> = React.memo(({
   crop,
   index,
   isSelected,
@@ -52,12 +52,13 @@ export const BentoItem: React.FC<BentoItemProps> = ({
       className={`group relative aspect-square rounded-[2rem] overflow-hidden glass flex flex-col transition-all duration-500 ${isSelected ? 'ring-1 ring-white/40 ring-offset-4 ring-offset-bg' : ''}`}
     >
       <div className="relative flex-1 overflow-hidden cursor-zoom-in">
-        <img 
-          src={crop.upscaledUrl || crop.url} 
-          alt={`Crop ${index}`} 
+        <img
+          src={crop.thumbnailUrl || crop.url}
+          alt={`Crop ${index}`}
           className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
           onClick={() => onFullscreen(crop.upscaledUrl || crop.url)}
           loading="lazy"
+          decoding="async"
         />
         
         <button 
@@ -242,4 +243,6 @@ export const BentoItem: React.FC<BentoItemProps> = ({
       </div>
     </motion.div>
   );
-};
+});
+
+BentoItem.displayName = 'BentoItem';
