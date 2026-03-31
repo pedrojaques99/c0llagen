@@ -15,6 +15,7 @@ import { BentoItem } from './components/features/BentoItem';
 import { FrameAnimateModal } from './components/features/FrameAnimateModal';
 import { RemotionPlayerModal } from './components/features/RemotionPlayerModal';
 import { BatchToolbar } from './components/features/BatchToolbar';
+import { BatchRenderModal } from './components/features/BatchRenderModal';
 
 declare global {
   interface Window {
@@ -47,6 +48,8 @@ export default function App() {
   const [animationStartTime, setAnimationStartTime] = useState<number | null>(null);
   const [upscaleStartTime, setUpscaleStartTime] = useState<number | null>(null);
   const [fullVideoStartTime, setFullVideoStartTime] = useState<number | null>(null);
+  const [batchRenderItems, setBatchRenderItems] = useState<{ id: string, url: string, preset: AnimationPreset }[]>([]);
+  const [isBatchRenderOpen, setIsBatchRenderOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { theme, toggleTheme } = useTheme();
@@ -409,15 +412,23 @@ export default function App() {
 
   const handleBatchRemotion = (preset: AnimationPreset) => {
     const selected = Array.from(selectedIds);
+    if (selected.length === 0) return;
+
     if (selected.length === 1) {
       const crop = croppedImages.find(c => c.id === selected[0]);
       if (crop) setRemotionData({ url: crop.upscaledUrl || crop.url, preset });
     } else {
-      // For batch, we just update the suggested/active preset for the items
-      setCroppedImages(prev => prev.map(c => 
-        selectedIds.has(c.id) ? { ...c, suggestedPreset: preset } : c
-      ));
-      // Optionally show a toast or feedback
+      // Batch mode: Open the sequential render modal
+      const itemsToRender = croppedImages
+        .filter(c => selectedIds.has(c.id))
+        .map(c => ({
+          id: c.id,
+          url: c.upscaledUrl || c.url,
+          preset: preset
+        }));
+      
+      setBatchRenderItems(itemsToRender);
+      setIsBatchRenderOpen(true);
     }
   };
 
@@ -728,6 +739,12 @@ export default function App() {
         onClose={() => setRemotionData(null)}
         imageUrl={remotionData?.url || ''}
         preset={remotionData?.preset || 'zoom-in'}
+      />
+
+      <BatchRenderModal 
+        isOpen={isBatchRenderOpen}
+        onClose={() => setIsBatchRenderOpen(false)}
+        items={batchRenderItems}
       />
     </div>
   );

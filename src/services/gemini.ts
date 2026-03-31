@@ -18,10 +18,12 @@ export interface AISuggestion {
 const getAI = () => {
   // Use ONLY the environment provided key (GEMINI_API_KEY) as requested.
   // This bypasses the AI Studio platform modal and uses the 'env backend' key.
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY;
+  const apiKey = geminiKey || process.env.API_KEY || (import.meta as any).env?.VITE_API_KEY;
   
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not set in the environment.");
+    console.error("API Key missing. Checked: process.env.GEMINI_API_KEY, VITE_GEMINI_API_KEY, GEMINI_API_KEY, and legacy API_KEY");
+    throw new Error("GEMINI_API_KEY is not set. Please ensure you have added it to your Vercel Environment Variables or .env file.");
   }
   
   return new GoogleGenAI({ apiKey });
@@ -59,7 +61,7 @@ export const generateVideo = async (
   onProgress?: (operation: any) => void
 ): Promise<string> => {
   const ai = getAI();
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
 
   const compressed = await compressImage(base64Image);
 
@@ -105,7 +107,7 @@ export const generateVideoWithFrames = async (
   onProgress?: (operation: any) => void
 ): Promise<string> => {
   const ai = getAI();
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
 
   const [startCompressed, endCompressed] = await Promise.all([
     compressImage(startImage),
@@ -156,7 +158,7 @@ export const generateFullVideo = async (
   onProgress?: (operation: any) => void
 ): Promise<string> => {
   const ai = getAI();
-  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
 
   // Compress images to avoid 413 error
   const compressedImages = await Promise.all(images.slice(0, 5).map(img => compressImage(img, 1024, 0.7)));
