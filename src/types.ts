@@ -33,6 +33,10 @@ export interface BatchRenderItem {
   progress: number;
   videoUrl?: string;
   blob?: Blob;
+  zoomScale?: number;
+  panAmount?: number;
+  speed?: number;
+  durationInSeconds?: number;
 }
 
 export type TransitionType = 'fade' | 'slide' | 'wipe' | 'none';

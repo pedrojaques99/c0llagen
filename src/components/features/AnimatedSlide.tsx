@@ -1,6 +1,7 @@
 import React from 'react';
-import { AbsoluteFill, Img, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Img, useCurrentFrame, useVideoConfig } from 'remotion';
 import { AnimationPreset } from '../../types';
+import { calculateAnimationStyles } from '../../utils/animationUtils';
 
 interface AnimatedSlideProps {
   imageUrl: string;
@@ -20,41 +21,20 @@ export const AnimatedSlide: React.FC<AnimatedSlideProps> = ({
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
 
-  const effectiveFrame = frame * speed;
+  const { scale, translateX, opacity } = calculateAnimationStyles(
+    frame, 
+    durationInFrames, 
+    preset, 
+    { zoomScale, panAmount, speed, durationInSeconds: durationInFrames / 30 }
+  );
 
-  let style: React.CSSProperties = {
+  const style: React.CSSProperties = {
     width: '100%',
     height: '100%',
     objectFit: 'cover' as const,
+    transform: `scale(${scale}) translateX(${translateX}%)`,
+    opacity
   };
-
-  switch (preset) {
-    case 'zoom-in': {
-      const s = interpolate(effectiveFrame, [0, durationInFrames], [1, zoomScale], { extrapolateRight: 'clamp' });
-      style.transform = `scale(${s})`;
-      break;
-    }
-    case 'zoom-out': {
-      const s = interpolate(effectiveFrame, [0, durationInFrames], [zoomScale, 1], { extrapolateRight: 'clamp' });
-      style.transform = `scale(${s})`;
-      break;
-    }
-    case 'pan-lr': {
-      const p = interpolate(effectiveFrame, [0, durationInFrames], [-panAmount, panAmount], { extrapolateRight: 'clamp' });
-      style.transform = `scale(${zoomScale}) translateX(${p}%)`;
-      break;
-    }
-    case 'pan-rl': {
-      const p = interpolate(effectiveFrame, [0, durationInFrames], [panAmount, -panAmount], { extrapolateRight: 'clamp' });
-      style.transform = `scale(${zoomScale}) translateX(${p}%)`;
-      break;
-    }
-    case 'fade-in': {
-      const o = interpolate(effectiveFrame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
-      style.opacity = o;
-      break;
-    }
-  }
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#000', overflow: 'hidden' }}>

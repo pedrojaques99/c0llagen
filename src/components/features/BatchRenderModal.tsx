@@ -9,10 +9,20 @@ import { BatchRenderItem, AnimationPreset, ExportStatus } from '../../types';
 import * as Mp4Muxer from 'mp4-muxer';
 import JSZip from 'jszip';
 
+import { calculateAnimationStyles, defaultAnimationParams } from '../../utils/animationUtils';
+
 interface BatchRenderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  items: { id: string, url: string, preset: AnimationPreset }[];
+  items: { 
+    id: string, 
+    url: string, 
+    preset: AnimationPreset,
+    zoomScale?: number,
+    panAmount?: number,
+    speed?: number,
+    durationInSeconds?: number
+  }[];
 }
 
 export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
@@ -39,10 +49,17 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
     setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'rendering', progress: 0 } : q));
 
     const fps = 30;
-    const durationInSeconds = 5;
+    const durationInSeconds = item.durationInSeconds || defaultAnimationParams.durationInSeconds;
     const totalFrames = fps * durationInSeconds;
     const width = 1920;
     const height = 1080;
+
+    const params = {
+      zoomScale: item.zoomScale || defaultAnimationParams.zoomScale,
+      panAmount: item.panAmount || defaultAnimationParams.panAmount,
+      speed: item.speed || defaultAnimationParams.speed,
+      durationInSeconds
+    };
 
     try {
       const canvas = document.createElement('canvas');
@@ -82,16 +99,7 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, width, height);
 
-        const progress = i / totalFrames;
-        let scale = 1, translateX = 0, opacity = 1;
-
-        switch (item.preset) {
-          case 'zoom-in': scale = 1 + (0.2 * progress); break;
-          case 'zoom-out': scale = 1.2 - (0.2 * progress); break;
-          case 'pan-lr': scale = 1.1; translateX = -5 + (10 * progress); break;
-          case 'pan-rl': scale = 1.1; translateX = 5 - (10 * progress); break;
-          case 'fade-in': opacity = Math.min(i / 15, 1); break;
-        }
+        const { scale, translateX, opacity } = calculateAnimationStyles(i, totalFrames, item.preset, params);
 
         const imgRatio = img.width / img.height;
         const canvasRatio = width / height;

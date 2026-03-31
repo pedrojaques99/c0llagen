@@ -6,6 +6,7 @@ import { MultiSlideComposition } from './MultiSlideComposition';
 import { RemotionComposition } from './RemotionComposition';
 import { AnimationPreset, RenderSlide, TransitionType, RenderComposition } from '../../types';
 import { Button } from '../ui/Button';
+import { ControlGroup } from '../ui/ControlGroup';
 import { useRenderQueue } from '../../hooks/useRenderQueue';
 
 interface RemotionPlayerModalProps {
@@ -18,15 +19,6 @@ interface RemotionPlayerModalProps {
   transitionDurationFrames?: number;
 }
 
-const ControlGroup = ({ label, icon, children }: { label: string, icon: React.ReactNode, children: React.ReactNode }) => (
-  <div className="flex flex-col gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/5">
-    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">
-      {icon}
-      {label}
-    </div>
-    {children}
-  </div>
-);
 
 export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
   isOpen,
@@ -201,7 +193,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
                     {slides.length} Separate
                   </Button>
                   <Button
-                    onClick={handleRenderCombined}
+                    onClick={handleEnqueueRender}
                     variant="primary"
                     size="md"
                     icon={<Video size={18} />}
@@ -211,7 +203,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
                 </div>
               ) : (
                 <Button
-                  onClick={handleRenderCombined}
+                  onClick={handleEnqueueRender}
                   variant="primary"
                   size="md"
                   icon={<Video size={18} />}
@@ -246,6 +238,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
                   </div>
                   <input 
                     type="range" min="1" max="15" step="0.5"
+                    aria-label="Animation Duration"
                     value={durationPerSlide}
                     onChange={(e) => setDurationPerSlide(Number(e.target.value))}
                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
@@ -261,6 +254,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
                   </div>
                   <input 
                     type="range" min="0.5" max="3" step="0.1"
+                    aria-label="Playback Speed Multiplier"
                     value={speed}
                     onChange={(e) => setSpeed(Number(e.target.value))}
                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
@@ -276,6 +270,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
                   </div>
                   <input 
                     type="range" min="1" max="2" step="0.05"
+                    aria-label="Zoom Scale Intensity"
                     value={zoomScale}
                     onChange={(e) => setZoomScale(Number(e.target.value))}
                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
@@ -291,6 +286,7 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
                   </div>
                   <input 
                     type="range" min="0" max="20" step="1"
+                    aria-label="Pan Movement Range Percentage"
                     value={panAmount}
                     onChange={(e) => setPanAmount(Number(e.target.value))}
                     className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
