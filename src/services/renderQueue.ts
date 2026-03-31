@@ -9,6 +9,7 @@ class RenderQueue {
   private queue: string[] = [];
   private isProcessing = false;
   private listeners: Set<Listener> = new Set();
+  private snapshot: RenderJob[] = [];
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -16,11 +17,12 @@ class RenderQueue {
   }
 
   private notify() {
+    this.snapshot = Array.from(this.jobs.values());
     this.listeners.forEach(fn => fn());
   }
 
   getJobs(): RenderJob[] {
-    return Array.from(this.jobs.values());
+    return this.snapshot;
   }
 
   getJob(id: string): RenderJob | undefined {

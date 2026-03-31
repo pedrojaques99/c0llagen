@@ -21,10 +21,6 @@ import { BatchRenderModal } from './components/features/BatchRenderModal';
 
 declare global {
   interface Window {
-    aistudio: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    };
     showDirectoryPicker: (options?: any) => Promise<FileSystemDirectoryHandle>;
   }
 }
@@ -65,9 +61,6 @@ export default function App() {
     // Component initialized
   }, []);
 
-  const handleSelectKey = async () => {
-    // Selection is now handled via environment variables on Vercel
-  };
 
   const processFiles = async (files: File[]) => {
     if (files.length === 0) return;
