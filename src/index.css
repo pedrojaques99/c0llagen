@@ -34,22 +34,40 @@
 
 @layer base {
   body {
-    @apply bg-bg text-ink font-sans antialiased selection:bg-white selection:text-black;
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background-attachment: fixed;
   }
 
   h1, h2, h3, h4 {
-    @apply font-sans tracking-tight font-semibold;
+    font-family: var(--font-sans);
+    letter-spacing: -0.025em;
+    font-weight: 600;
+  }
+
+  selection {
+    background-color: var(--ink);
+    color: var(--bg);
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/[0.03] border border-white/10 backdrop-blur-2xl backdrop-saturate-150 shadow-2xl;
+    background-color: var(--glass);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
   }
 
   .glass-hover {
-    @apply hover:bg-white/5 transition-all duration-200;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .glass-hover:hover {
+    background-color: var(--glass-muted);
   }
 
   .bento-grid {
@@ -60,15 +78,20 @@
 }
 
 .markdown-body {
-  @apply text-sm leading-relaxed text-muted;
+  font-size: 0.875rem;
+  line-height: 1.625;
+  color: var(--muted);
 }
 
 .markdown-body p {
-  @apply mb-4;
+  margin-bottom: 1rem;
 }
 
 .markdown-body h1, .markdown-body h2 {
-  @apply text-ink font-serif mb-2 mt-6;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
 }
 
 @layer utilities {
@@ -82,13 +105,26 @@
 }
 
 input[type='range'] {
-  @apply accent-ink;
+  accent-color: var(--ink);
 }
 
 input[type='range']::-webkit-slider-runnable-track {
-  @apply bg-border rounded-full h-1;
+  background-color: var(--border);
+  border-radius: 9999px;
+  height: 4px;
 }
 
 input[type='range']::-webkit-slider-thumb {
-  @apply appearance-none w-3 h-3 bg-ink rounded-full -mt-1 shadow-lg hover:scale-125 transition-transform;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background-color: var(--ink);
+  border-radius: 9999px;
+  margin-top: -4px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
 }

@@ -10,14 +10,15 @@ const JobToast: React.FC<{ job: RenderJob; onCancel: () => void; onDismiss: () =
     : 0;
 
   const slideCount = job.composition.slides.length;
-  const label = slideCount === 1 ? 'Single Clip' : `${slideCount} Slides`;
+  const label = job.composition.name || (slideCount === 1 ? 'Single Clip' : `${slideCount} Slides`);
+  const thumb = job.composition.thumbnailUrl || job.composition.slides[0]?.imageUrl;
 
   const handleDownload = () => {
     if (!job.blob) return;
     const url = URL.createObjectURL(job.blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `collagen-${job.id}.mp4`;
+    link.download = `${job.composition.name || 'render'}.mp4`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -25,72 +26,105 @@ const JobToast: React.FC<{ job: RenderJob; onCancel: () => void; onDismiss: () =
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-      className="glass rounded-2xl border border-white/10 p-4 w-80 shadow-2xl"
+      initial={{ opacity: 0, x: 20, scale: 0.95 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 10, scale: 0.95 }}
+      className="bg-bg/80 glass rounded-3xl border border-border p-3 w-80 shadow-2xl flex gap-4 overflow-hidden"
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">{label}</span>
-        <button
-          onClick={job.status === 'rendering' ? onCancel : onDismiss}
-          className="p-1 hover:bg-white/10 rounded-full transition-all"
-        >
-          <X size={14} className="text-white/40" />
-        </button>
+      {/* Thumbnail */}
+      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-glass flex-shrink-0 relative">
+        {thumb ? (
+          <img src={thumb} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Loader2 size={16} className="text-muted animate-spin" />
+          </div>
+        )}
+        {job.status === 'downloaded' && (
+          <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+            <CheckCircle2 size={16} className="text-emerald-400" />
+          </div>
+        )}
       </div>
 
-      {job.status === 'rendering' && (
-        <>
-          <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mb-2">
-            <motion.div
-              className="h-full bg-white rounded-full"
-              style={{ width: `${job.progress}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono text-white/40">{Math.round(job.progress)}%</span>
-            <span className="text-[10px] font-mono text-white/40">{elapsed.toFixed(1)}s</span>
-          </div>
-        </>
-      )}
-
-      {job.status === 'completed' && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-green-400" />
-            <span className="text-xs text-white/60">Done in {elapsed.toFixed(1)}s</span>
-          </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink truncate pr-2">
+            {label}
+          </span>
           <button
-            onClick={handleDownload}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white/90 transition-all"
+            onClick={job.status === 'rendering' || job.status === 'queued' ? onCancel : onDismiss}
+            className="p-1 hover:bg-glass rounded-full transition-all flex-shrink-0"
           >
-            <Download size={12} /> Save
+            <X size={12} className="text-muted" />
           </button>
         </div>
-      )}
 
-      {job.status === 'error' && (
-        <div className="flex items-center gap-2">
-          <AlertCircle size={16} className="text-red-400" />
-          <span className="text-xs text-red-400">{job.error || 'Render failed'}</span>
-        </div>
-      )}
+        <div className="relative">
+          {job.status === 'rendering' && (
+            <div className="flex flex-col gap-1.5">
+              <div className="w-full h-1 bg-glass rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-ink rounded-full"
+                  style={{ width: `${job.progress}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-mono text-muted">{Math.round(job.progress)}%</span>
+                <span className="text-[9px] font-mono text-muted">{elapsed.toFixed(1)}s</span>
+              </div>
+            </div>
+          )}
 
-      {job.status === 'queued' && (
-        <div className="flex items-center gap-2">
-          <Loader2 size={14} className="text-white/40 animate-spin" />
-          <span className="text-xs text-white/40">Queued...</span>
-        </div>
-      )}
+          {job.status === 'downloaded' && (
+            <motion.div 
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 size={12} className="text-emerald-400" />
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Saved!</span>
+              </div>
+              <span className="text-[9px] font-mono text-muted">{elapsed.toFixed(1)}s</span>
+            </motion.div>
+          )}
 
-      {job.status === 'cancelled' && (
-        <div className="flex items-center gap-2">
-          <XCircle size={16} className="text-white/30" />
-          <span className="text-xs text-white/30">Cancelled</span>
+          {job.status === 'completed' && (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted font-bold uppercase tracking-widest">Ready</span>
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-1 px-2 py-1 rounded-full bg-ink text-bg text-[9px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+              >
+                <Download size={10} /> Save
+              </button>
+            </div>
+          )}
+
+          {job.status === 'error' && (
+            <div className="flex items-center gap-1.5">
+              <AlertCircle size={12} className="text-red-400" />
+              <span className="text-[10px] text-red-400 truncate font-medium">{job.error || 'Failed'}</span>
+            </div>
+          )}
+
+          {job.status === 'queued' && (
+            <div className="flex items-center gap-1.5">
+              <Loader2 size={12} className="text-muted animate-spin" />
+              <span className="text-[10px] text-muted font-medium">Waiting...</span>
+            </div>
+          )}
+
+          {job.status === 'cancelled' && (
+            <div className="flex items-center gap-1.5 text-muted/40">
+              <XCircle size={12} />
+              <span className="text-[10px] font-medium uppercase tracking-widest">Cancelled</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </motion.div>
   );
 };

@@ -17,6 +17,8 @@ interface RemotionPlayerModalProps {
   slides?: RenderSlide[];
   transition?: TransitionType;
   transitionDurationFrames?: number;
+  name?: string;
+  thumbnailUrl?: string;
 }
 
 
@@ -28,6 +30,8 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
   slides: propSlides,
   transition = 'fade',
   transitionDurationFrames = 15,
+  name,
+  thumbnailUrl,
 }) => {
   const playerRef = useRef<PlayerRef>(null);
   const { enqueue } = useRenderQueue();
@@ -76,6 +80,8 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
   const handleEnqueueRender = () => {
     const composition: RenderComposition = {
       id: `render-${Date.now()}`,
+      name: name || (isMulti ? `${slides.length} Slides` : 'Single Clip'),
+      thumbnailUrl: thumbnailUrl || slides[0].imageUrl,
       slides,
       fps,
       transition: (isMulti ? transition : 'none') as TransitionType,
@@ -89,6 +95,8 @@ export const RemotionPlayerModal: React.FC<RemotionPlayerModalProps> = ({
     slides.forEach((slide, i) => {
       const composition: RenderComposition = {
         id: `render-${Date.now()}-${i}`,
+        name: `Clip ${i + 1}`,
+        thumbnailUrl: slide.imageUrl,
         slides: [slide],
         fps,
         transition: 'none' as TransitionType,

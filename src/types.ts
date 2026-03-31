@@ -54,13 +54,15 @@ export interface RenderSlide {
 
 export interface RenderComposition {
   id: string;
+  name?: string;
+  thumbnailUrl?: string;
   slides: RenderSlide[];
   fps: number;
   transition: TransitionType;
   transitionDurationFrames: number;
 }
 
-export type RenderJobStatus = 'queued' | 'rendering' | 'completed' | 'cancelled' | 'error';
+export type RenderJobStatus = 'queued' | 'rendering' | 'completed' | 'downloaded' | 'cancelled' | 'error';
 
 export interface RenderJob {
   id: string;

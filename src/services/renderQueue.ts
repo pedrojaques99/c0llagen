@@ -99,6 +99,23 @@ class RenderQueue {
       job.progress = 100;
       job.blob = blob;
       job.completedAt = Date.now();
+      this.notify();
+
+      // Auto-download
+      try {
+        const url = URL.createObjectURL(blob);
+        const name = job.composition.name || `render-${job.id}`;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${name}.mp4`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        job.status = 'downloaded';
+        this.notify();
+      } catch (e) {
+        console.error("Auto-download failed", e);
+      }
     } catch (err: any) {
       if (err.name === 'AbortError') {
         job.status = 'cancelled';
