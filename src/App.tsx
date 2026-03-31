@@ -12,7 +12,6 @@ import { Footer } from './components/layout/Footer';
 import { DropZone } from './components/features/DropZone';
 import { SourcePreview } from './components/features/SourcePreview';
 import { BentoItem } from './components/features/BentoItem';
-import { ApiKeyModal } from './components/features/ApiKeyModal';
 import { FrameAnimateModal } from './components/features/FrameAnimateModal';
 import { RemotionPlayerModal } from './components/features/RemotionPlayerModal';
 import { BatchToolbar } from './components/features/BatchToolbar';
@@ -33,7 +32,6 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [directoryHandle, setDirectoryHandle] = useState<FileSystemDirectoryHandle | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
   const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
   const [remotionData, setRemotionData] = useState<{ url: string, preset: AnimationPreset } | null>(null);
@@ -54,15 +52,11 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
-    // Always bypass the API key modal and rely on the environment key
-    setHasApiKey(true);
+    // Component initialized
   }, []);
 
   const handleSelectKey = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      setHasApiKey(true);
-    }
+    // Selection is now handled via environment variables on Vercel
   };
 
   const processFiles = async (files: File[]) => {
@@ -199,8 +193,7 @@ export default function App() {
     } catch (err: any) {
       console.error(err);
       if (err.message?.includes("permission") || err.message?.includes("403")) {
-        setError("Permission denied. Please ensure you have selected a valid API key with billing enabled.");
-        setHasApiKey(false);
+        setError("Permission denied. Please ensure your GEMINI_API_KEY has billing enabled.");
       } else {
         setError("Failed to analyze and split the image. Please try again.");
       }
@@ -214,11 +207,6 @@ export default function App() {
     const crop = croppedImages.find(c => c.id === id);
     if (!crop || crop.upscaledUrl || crop.isUpscaling) return;
 
-    if (!hasApiKey) {
-      setError("A user-selected API key is required for 4K upscaling.");
-      return;
-    }
-
     setCroppedImages(prev => prev.map(c => c.id === id ? { ...c, isUpscaling: true, upscaleStartTime: Date.now() } : c));
 
     try {
@@ -229,7 +217,6 @@ export default function App() {
       setCroppedImages(prev => prev.map(c => c.id === id ? { ...c, isUpscaling: false } : c));
       if (err.message?.includes("permission") || err.message?.includes("403")) {
         setError("Permission denied. Image generation models require a paid API key.");
-        setHasApiKey(false);
       } else {
         setError("Failed to upscale image.");
       }
@@ -239,11 +226,6 @@ export default function App() {
   const handleAnimate = async (id: string, prompt: string) => {
     const crop = croppedImages.find(c => c.id === id);
     if (!crop || !crop.upscaledUrl || crop.isAnimating) return;
-
-    if (!hasApiKey) {
-      setError("A user-selected API key is required for video generation.");
-      return;
-    }
 
     setCroppedImages(prev => prev.map(c => c.id === id ? { 
       ...c, 
@@ -264,7 +246,6 @@ export default function App() {
       setCroppedImages(prev => prev.map(c => c.id === id ? { ...c, isAnimating: false } : c));
       if (err.message?.includes("permission") || err.message?.includes("403")) {
         setError("Permission denied. Video generation requires a paid API key.");
-        setHasApiKey(false);
       } else {
         setError("Failed to generate video.");
       }
@@ -273,11 +254,6 @@ export default function App() {
 
   const handleDirectAnimate = async () => {
     if (!sourceImage || isAnimatingSource) return;
-
-    if (!hasApiKey) {
-      setError("A user-selected API key is required for video generation.");
-      return;
-    }
 
     if (!showSourcePrompt) {
       setShowSourcePrompt(true);
@@ -304,7 +280,6 @@ export default function App() {
       setIsAnimatingSource(false);
       if (err.message?.includes("permission") || err.message?.includes("403")) {
         setError("Permission denied. Video generation requires a paid API key.");
-        setHasApiKey(false);
       } else {
         setError("Failed to generate video.");
       }
@@ -313,11 +288,6 @@ export default function App() {
 
   const handleUpscaleSource = async () => {
     if (!sourceImage || isUpscalingSource) return;
-
-    if (!hasApiKey) {
-      setError("A user-selected API key is required for 4K upscaling.");
-      return;
-    }
 
     setIsUpscalingSource(true);
     setUpscaleStartTime(Date.now());
@@ -334,7 +304,6 @@ export default function App() {
       setUpscaleStartTime(null);
       if (err.message?.includes("permission") || err.message?.includes("403")) {
         setError("Permission denied. 4K upscaling requires a paid API key.");
-        setHasApiKey(false);
       } else {
         setError("Failed to upscale image.");
       }
@@ -360,7 +329,6 @@ export default function App() {
       setAnimationStartTime(null);
       if (err.message?.includes("permission") || err.message?.includes("403")) {
         setError("Permission denied. Video generation requires a paid API key.");
-        setHasApiKey(false);
       } else {
         setError("Failed to generate video with frames.");
       }
@@ -369,11 +337,6 @@ export default function App() {
 
   const handleCreateFullVideo = async () => {
     if (croppedImages.length === 0 || isCreatingFullVideo) return;
-
-    if (!hasApiKey) {
-      setError("A user-selected API key is required for video generation.");
-      return;
-    }
 
     setIsCreatingFullVideo(true);
     setFullVideoStartTime(Date.now());
@@ -396,7 +359,6 @@ export default function App() {
       setFullVideoStartTime(null);
       if (err.message?.includes("permission") || err.message?.includes("403")) {
         setError("Permission denied. Video generation requires a paid API key.");
-        setHasApiKey(false);
       } else {
         setError("Failed to generate complete video.");
       }
@@ -567,9 +529,7 @@ export default function App() {
     setSourcePrompt("");
   };
 
-  if (hasApiKey === false) {
-    return <ApiKeyModal onSelectKey={handleSelectKey} />;
-  }
+
 
   return (
     <div className="min-h-screen bg-bg text-white selection:bg-white selection:text-black">
@@ -579,7 +539,6 @@ export default function App() {
         isUpscalingSource={isUpscalingSource}
         upscaleStartTime={upscaleStartTime}
         onFrameAnimateClick={() => setShowFrameModal(true)}
-        onApiKeyClick={handleSelectKey}
         sourceImage={sourceImage}
         hasCroppedImages={croppedImages.length > 0}
         onCreateFullVideo={handleCreateFullVideo}

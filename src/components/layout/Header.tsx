@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { 
-  Sparkles, Video, Maximize2, Film, Loader2, Settings
+  Sparkles, Video, Maximize2, Film, Loader2
 } from 'lucide-react';
-import { Button, IconButton } from '../ui/Button';
+import { Button } from '../ui/Button';
 import { Timer } from '../ui/Timer';
 
 interface HeaderProps {
@@ -12,7 +12,6 @@ interface HeaderProps {
   isUpscalingSource: boolean;
   upscaleStartTime: number | null;
   onFrameAnimateClick: () => void;
-  onApiKeyClick: () => void;
   sourceImage: string | null;
   hasCroppedImages: boolean;
   onCreateFullVideo: () => void;
@@ -26,7 +25,6 @@ export const Header: React.FC<HeaderProps> = ({
   isUpscalingSource,
   upscaleStartTime,
   onFrameAnimateClick,
-  onApiKeyClick,
   sourceImage,
   hasCroppedImages,
   onCreateFullVideo,
@@ -96,11 +94,6 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <IconButton 
-            onClick={onApiKeyClick}
-            icon={<Settings size={18} strokeWidth={1.5} />}
-            title="Settings"
-          />
         </div>
       </div>
     </header>
