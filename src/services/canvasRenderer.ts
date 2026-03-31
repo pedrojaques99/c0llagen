@@ -184,8 +184,12 @@ export async function renderComposition(
 ): Promise<Blob> {
   const { slides, fps, transition } = composition;
 
-  const outputWidth = Math.max(...slides.map(s => s.width));
-  const outputHeight = Math.max(...slides.map(s => s.height));
+  const MAX_DIM = 1920;
+  const rawW = Math.max(...slides.map(s => s.width));
+  const rawH = Math.max(...slides.map(s => s.height));
+  const scale = Math.min(MAX_DIM / rawW, MAX_DIM / rawH, 1);
+  const outputWidth = Math.round(rawW * scale);
+  const outputHeight = Math.round(rawH * scale);
 
   // Ensure even dimensions (required by H.264)
   const width = outputWidth % 2 === 0 ? outputWidth : outputWidth + 1;
@@ -220,7 +224,7 @@ export async function renderComposition(
   };
 
   videoEncoder.configure({
-    codec: 'avc1.640028',
+    codec: 'avc1.640033',
     width,
     height,
     bitrate: 8_000_000,
