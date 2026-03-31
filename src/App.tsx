@@ -65,19 +65,52 @@ export default function App() {
     }
   };
 
-  const processFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      setError("Please upload an image file.");
-      return;
+  const processFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+
+    if (files.length === 1 && !sourceImage && croppedImages.length === 0) {
+      // Standard single image flow
+      const file = files[0];
+      if (!file.type.startsWith('image/')) {
+        setError("Please upload an image file.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSourceImage(event.target?.result as string);
+        setCroppedImages([]);
+        setSelectedIds(new Set());
+        setError(null);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Batch mode: add directly to grid
+      const newItems: CroppedImage[] = [];
+      
+      for (const file of files) {
+        if (!file.type.startsWith('image/')) continue;
+        
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+
+        newItems.push({
+          id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          url: dataUrl,
+          isUpscaling: false,
+          isAnimating: false
+        });
+      }
+
+      if (newItems.length > 0) {
+        setCroppedImages(prev => [...prev, ...newItems]);
+        setError(null);
+        // Automatically suggest prompts for the new batch
+        handleAISuggest(newItems);
+      }
     }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setSourceImage(event.target?.result as string);
-      setCroppedImages([]);
-      setSelectedIds(new Set());
-      setError(null);
-    };
-    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
@@ -85,22 +118,39 @@ export default function App() {
       const items = e.clipboardData?.items;
       if (!items) return;
 
+      const files: File[] = [];
       for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf('image') !== -1) {
           const file = items[i].getAsFile();
-          if (file) processFile(file);
-          break;
+          if (file) files.push(file as File);
         }
       }
+      if (files.length > 0) processFiles(files);
+    };
+
+    const handleGlobalDrop = (e: DragEvent) => {
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer?.files as FileList || []).filter((f: File) => f.type.startsWith('image/'));
+      if (files.length > 0) processFiles(files);
+    };
+
+    const handleGlobalDragOver = (e: DragEvent) => {
+      e.preventDefault();
     };
 
     window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
+    window.addEventListener('drop', handleGlobalDrop);
+    window.addEventListener('dragover', handleGlobalDragOver);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+      window.removeEventListener('drop', handleGlobalDrop);
+      window.removeEventListener('dragover', handleGlobalDragOver);
+    };
   }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
+    const files = Array.from(e.target.files as FileList || []);
+    if (files.length > 0) processFiles(files as File[]);
   };
 
   const splitImage = async () => {
@@ -542,6 +592,7 @@ export default function App() {
         ref={fileInputRef} 
         onChange={handleFileUpload} 
         accept="image/*" 
+        multiple
         className="hidden" 
       />
 
@@ -570,7 +621,10 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="flex flex-col items-center justify-center min-h-[60vh]"
             >
-              <DropZone onUpload={() => fileInputRef.current?.click()} />
+              <DropZone 
+                onUpload={() => fileInputRef.current?.click()} 
+                onFilesDropped={processFiles}
+              />
             </motion.div>
           )}
 
