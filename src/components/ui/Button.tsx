@@ -19,10 +19,10 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles = "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-300 active:scale-[0.98] disabled:opacity-30 disabled:pointer-events-none";
   
   const variants = {
-    primary: "bg-white text-black hover:bg-white/90 shadow-[0_10px_30px_rgba(255,255,255,0.1)]",
-    secondary: "bg-white/5 text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl",
-    outline: "border border-white/10 hover:border-white/40 text-white bg-transparent",
-    ghost: "text-white/40 hover:text-white hover:bg-white/5"
+    primary: "bg-ink text-bg hover:opacity-90 shadow-2xl",
+    secondary: "bg-glass text-ink hover:bg-glass-muted border border-border backdrop-blur-xl",
+    outline: "border border-border hover:border-ink/40 text-ink bg-transparent",
+    ghost: "text-muted hover:text-ink hover:bg-glass"
   };
 
   const sizes = {
@@ -57,10 +57,10 @@ export const IconButton: React.FC<IconButtonProps> = ({
   ...props 
 }) => {
   const variants = {
-    primary: "bg-white text-black hover:bg-white/90 shadow-[0_10px_30px_rgba(255,255,255,0.1)]",
-    secondary: "bg-white/5 text-white hover:bg-white/10 border border-white/10 backdrop-blur-xl",
-    outline: "border border-white/10 hover:border-white/40 text-white bg-transparent",
-    ghost: "text-white/40 hover:text-white hover:bg-white/5"
+    primary: "bg-ink text-bg hover:opacity-90 shadow-2xl",
+    secondary: "bg-glass text-ink hover:bg-glass-muted border border-border backdrop-blur-xl",
+    outline: "border border-border hover:border-ink/40 text-ink bg-transparent",
+    ghost: "text-muted hover:text-ink hover:bg-glass"
   };
 
   return (

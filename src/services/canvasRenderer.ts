@@ -215,6 +215,10 @@ export async function renderComposition(
     error: (e) => { encoderError = e; },
   });
 
+  const safeCloseEncoder = () => {
+    try { if (videoEncoder.state !== 'closed') videoEncoder.close(); } catch {}
+  };
+
   videoEncoder.configure({
     codec: 'avc1.640028',
     width,
@@ -226,12 +230,12 @@ export async function renderComposition(
 
   for (let frame = 0; frame < totalFrames; frame++) {
     if (callbacks.signal.aborted) {
-      videoEncoder.close();
+      safeCloseEncoder();
       throw new DOMException('Render cancelled', 'AbortError');
     }
 
     if (encoderError) {
-      videoEncoder.close();
+      safeCloseEncoder();
       throw encoderError;
     }
 
@@ -260,7 +264,13 @@ export async function renderComposition(
     }
 
     const videoFrame = new VideoFrame(canvas, { timestamp: (frame * 1_000_000) / fps });
-    videoEncoder.encode(videoFrame, { keyFrame: frame % (fps * 2) === 0 });
+    try {
+      videoEncoder.encode(videoFrame, { keyFrame: frame % (fps * 2) === 0 });
+    } catch (e) {
+      videoFrame.close();
+      safeCloseEncoder();
+      throw e;
+    }
     videoFrame.close();
 
     callbacks.onProgress((frame / totalFrames) * 100);
@@ -269,12 +279,12 @@ export async function renderComposition(
   }
 
   if (encoderError) {
-    videoEncoder.close();
+    safeCloseEncoder();
     throw encoderError;
   }
 
   await videoEncoder.flush();
-  videoEncoder.close();
+  safeCloseEncoder();
   muxer.finalize();
 
   const { buffer } = muxer.target as Mp4Muxer.ArrayBufferTarget;

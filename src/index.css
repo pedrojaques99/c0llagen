@@ -10,7 +10,8 @@
   --color-muted: var(--muted);
   --color-border: var(--border);
   --color-glass: var(--glass);
-  --color-primary: #ffffff;
+  --color-glass-muted: var(--glass-muted);
+  --color-accent: var(--ink);
 }
 
 :root {
@@ -19,6 +20,7 @@
   --muted: #888888;
   --border: rgba(255, 255, 255, 0.1);
   --glass: rgba(255, 255, 255, 0.03);
+  --glass-muted: rgba(255, 255, 255, 0.02);
 }
 
 .light {
@@ -26,7 +28,8 @@
   --ink: #171717;
   --muted: #737373;
   --border: #e5e5e5;
-  --glass: rgba(0, 0, 0, 0.02);
+  --glass: rgba(0, 0, 0, 0.04);
+  --glass-muted: rgba(0, 0, 0, 0.02);
 }
 
 @layer base {
@@ -79,13 +82,13 @@
 }
 
 input[type='range'] {
-  @apply accent-white;
+  @apply accent-ink;
 }
 
 input[type='range']::-webkit-slider-runnable-track {
-  @apply bg-white/10 rounded-full h-1;
+  @apply bg-border rounded-full h-1;
 }
 
 input[type='range']::-webkit-slider-thumb {
-  @apply appearance-none w-3 h-3 bg-white rounded-full -mt-1 shadow-lg hover:scale-125 transition-transform;
+  @apply appearance-none w-3 h-3 bg-ink rounded-full -mt-1 shadow-lg hover:scale-125 transition-transform;
 }

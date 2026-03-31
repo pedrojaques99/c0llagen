@@ -13,11 +13,13 @@ export const ControlGroup: React.FC<ControlGroupProps> = ({
   children, 
   className = '' 
 }) => (
-  <div className={`flex flex-col gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/5 transition-all hover:bg-white/[0.05] hover:border-white/10 ${className}`}>
-    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">
+  <div className={`flex flex-col gap-3 p-4 rounded-2xl bg-glass border border-border transition-all hover:bg-glass-muted hover:border-ink/20 ${className}`}>
+    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted font-bold">
       {icon}
       {label}
     </div>
-    {children}
+    <div className="text-ink">
+      {children}
+    </div>
   </div>
 );

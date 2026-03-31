@@ -190,20 +190,20 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-ink/90 backdrop-blur-3xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-bg/80 backdrop-blur-3xl">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-bg glass border border-white/10 rounded-[3rem] w-full max-w-2xl overflow-hidden flex flex-col shadow-2xl"
+          className="bg-bg glass border border-border rounded-[3rem] w-full max-w-2xl overflow-hidden flex flex-col shadow-2xl"
         >
           {/* Header */}
-          <div className="px-10 py-8 border-b border-white/10 flex items-center justify-between">
-            <div className="flex flex-col gap-1">
+          <div className="px-10 py-8 border-b border-border flex items-center justify-between">
+            <div className="flex flex-col gap-1 text-ink">
               <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${isRendering ? 'bg-blue-400 animate-pulse' : 'bg-white/20'}`} />
+                <div className={`w-2 h-2 rounded-full ${isRendering ? 'bg-blue-400 animate-pulse' : 'bg-muted'}`} />
                 <h2 className="text-xl font-bold tracking-tight">Batch Render</h2>
               </div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-white/40">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-muted">
                 {totalCompleted} of {queue.length} items rendered
               </p>
             </div>
@@ -221,11 +221,11 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 className={`flex items-center justify-between p-5 rounded-3xl transition-all ${
-                  activeId === item.id ? 'bg-white/10 scale-[1.02]' : 'bg-white/[0.03]'
+                  activeId === item.id ? 'bg-glass border border-ink/10 scale-[1.02]' : 'bg-glass-muted border border-border'
                 }`}
               >
                 <div className="flex items-center gap-5">
-                  <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0">
+                  <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-glass flex-shrink-0">
                     <img src={item.url} className="w-full h-full object-cover" />
                     {item.status === 'rendering' && (
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -234,10 +234,10 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
                     )}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
                       {item.preset.replace('-', ' ')}
                     </span>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 text-ink">
                       {item.status === 'completed' && <CheckCircle2 size={14} className="text-emerald-400" />}
                       {item.status === 'error' && <AlertCircle size={14} className="text-red-400" />}
                       <span className="text-sm font-medium">Render #{idx + 1}</span>
@@ -248,14 +248,14 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
                 <div className="flex items-center gap-4">
                   {item.status === 'rendering' && (
                     <div className="flex flex-col items-end gap-1">
-                      <div className="w-24 h-1 bg-white/5 rounded-full overflow-hidden">
+                      <div className="w-24 h-1 bg-border rounded-full overflow-hidden">
                         <motion.div 
-                         className="h-full bg-white"
+                         className="h-full bg-ink"
                          initial={{ width: 0 }}
                          animate={{ width: `${item.progress}%` }}
                         />
                       </div>
-                      <span className="text-[9px] font-mono opacity-40">{Math.round(item.progress)}%</span>
+                      <span className="text-[9px] font-mono text-muted">{Math.round(item.progress)}%</span>
                     </div>
                   )}
                   {item.status === 'completed' && (
@@ -269,7 +269,7 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
                     </Button>
                   )}
                   {item.status === 'idle' && (
-                    <span className="text-[9px] uppercase tracking-widest opacity-20">Queued</span>
+                    <span className="text-[9px] uppercase tracking-widest text-muted opacity-50">Queued</span>
                   )}
                 </div>
               </motion.div>
@@ -277,7 +277,7 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="p-10 bg-white/[0.02] border-t border-white/10 flex items-center justify-between">
+          <div className="p-10 bg-glass border-t border-border flex items-center justify-between">
             {!isRendering && !isFinished ? (
               <Button 
                 onClick={startBatch} 
@@ -309,7 +309,7 @@ export const BatchRenderModal: React.FC<BatchRenderModalProps> = ({
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center gap-4 text-white/40 text-[10px] uppercase tracking-[0.3em] w-full justify-center">
+              <div className="flex items-center gap-4 text-muted text-[10px] uppercase tracking-[0.3em] w-full justify-center">
                 <Loader2 className="animate-spin" size={14} />
                 <span>Processing Queue... Do not close window</span>
               </div>
