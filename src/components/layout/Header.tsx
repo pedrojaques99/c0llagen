@@ -5,6 +5,7 @@ import {
 import { Button } from '../ui/Button';
 import { Timer } from '../ui/Timer';
 import { TokenCounter } from '../features/TokenCounter';
+import { Breadcrumbs, BreadcrumbItem } from '../ui/Breadcrumbs';
 
 interface HeaderProps {
   onReset: () => void;
@@ -17,6 +18,7 @@ interface HeaderProps {
   onCreateFullVideo: () => void;
   isCreatingFullVideo: boolean;
   fullVideoStartTime: number | null;
+  breadcrumbs: BreadcrumbItem[];
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,18 +32,25 @@ export const Header: React.FC<HeaderProps> = ({
   onCreateFullVideo,
   isCreatingFullVideo,
   fullVideoStartTime,
+  breadcrumbs,
 }) => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-8 py-6">
       <div className="max-w-[1400px] mx-auto flex items-center justify-between glass px-8 py-4 rounded-[2.5rem] border border-border shadow-2xl backdrop-blur-3xl">
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={onReset}>
-            <div className="flex flex-col">
-              <h1 className="text-lg font-bold tracking-tight text-ink leading-none">C0LLAGEN</h1>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={onReset}>
+              <div className="flex flex-col">
+                <h1 className="text-lg font-bold tracking-tight text-ink leading-none">C0LLAGEN</h1>
+              </div>
             </div>
+            
+            <div className="h-4 w-[1px] bg-border/50" />
+            
+            <Breadcrumbs items={breadcrumbs} />
           </div>
 
-          {sourceImage && (
+          {(sourceImage || hasCroppedImages) && (
             <div className="h-8 w-[1px] bg-border" />
           )}
 
@@ -105,3 +114,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

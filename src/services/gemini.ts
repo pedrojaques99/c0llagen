@@ -15,20 +15,43 @@ export interface AISuggestion {
   prompt: string;
 }
 
+export interface TokenUsageBreakdown {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
 export const tokenUsage = {
   totalTokens: 0,
   promptTokens: 0,
   completionTokens: 0,
+  breakdown: {
+    image: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    video: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    analysis: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+  } as Record<string, TokenUsageBreakdown>
 };
 
-const updateTokenUsage = (response: any) => {
+const updateTokenUsage = (response: any, type: 'image' | 'video' | 'analysis' = 'analysis') => {
   if (response.usageMetadata) {
-    tokenUsage.promptTokens += response.usageMetadata.promptTokenCount || 0;
-    tokenUsage.completionTokens += response.usageMetadata.candidatesTokenCount || 0;
-    tokenUsage.totalTokens += response.usageMetadata.totalTokenCount || 0;
+    const promptTokens = response.usageMetadata.promptTokenCount || 0;
+    const completionTokens = response.usageMetadata.candidatesTokenCount || 0;
+    const totalTokens = response.usageMetadata.totalTokenCount || 0;
+
+    tokenUsage.promptTokens += promptTokens;
+    tokenUsage.completionTokens += completionTokens;
+    tokenUsage.totalTokens += totalTokens;
     
-    // Dispatch a custom event for UI updates if needed
-    window.dispatchEvent(new CustomEvent('token-update', { detail: tokenUsage }));
+    if (!tokenUsage.breakdown[type]) {
+      tokenUsage.breakdown[type] = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+    }
+    
+    tokenUsage.breakdown[type].promptTokens += promptTokens;
+    tokenUsage.breakdown[type].completionTokens += completionTokens;
+    tokenUsage.breakdown[type].totalTokens += totalTokens;
+    
+    // Dispatch a custom event for UI updates
+    window.dispatchEvent(new CustomEvent('token-update', { detail: { ...tokenUsage } }));
   }
 };
 
@@ -81,7 +104,8 @@ const compressImage = async (base64: string, maxWidth = 1280, quality = 0.8): Pr
 export const generateVideo = async (
   base64Image: string, 
   prompt: string,
-  onProgress?: (operation: any) => void
+  onProgress?: (operation: any) => void,
+  includeAudio: boolean = false
 ): Promise<string> => {
   const ai = getAI();
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -98,8 +122,9 @@ export const generateVideo = async (
     config: {
       numberOfVideos: 1,
       resolution: '720p',
-      aspectRatio: '16:9'
-    }
+      aspectRatio: '16:9',
+      includeAudio
+    } as any
   });
 
   // Poll for completion
@@ -107,6 +132,10 @@ export const generateVideo = async (
     if (onProgress) onProgress(operation);
     await new Promise(resolve => setTimeout(resolve, 10000));
     operation = await ai.operations.getVideosOperation({ operation: operation });
+  }
+
+  if ((operation.response as any)?.usageMetadata) {
+    updateTokenUsage(operation.response, 'video');
   }
 
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
@@ -127,7 +156,8 @@ export const generateVideoWithFrames = async (
   startImage: string,
   endImage: string,
   prompt: string,
-  onProgress?: (operation: any) => void
+  onProgress?: (operation: any) => void,
+  includeAudio: boolean = false
 ): Promise<string> => {
   const ai = getAI();
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -151,8 +181,9 @@ export const generateVideoWithFrames = async (
       lastFrame: {
         imageBytes: endCompressed.split(",")[1],
         mimeType: 'image/jpeg',
-      }
-    }
+      },
+      includeAudio
+    } as any
   });
 
   // Poll for completion
@@ -160,6 +191,10 @@ export const generateVideoWithFrames = async (
     if (onProgress) onProgress(operation);
     await new Promise(resolve => setTimeout(resolve, 10000));
     operation = await ai.operations.getVideosOperation({ operation: operation });
+  }
+
+  if ((operation.response as any)?.usageMetadata) {
+    updateTokenUsage(operation.response, 'video');
   }
 
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
@@ -178,7 +213,8 @@ export const generateVideoWithFrames = async (
 
 export const generateFullVideo = async (
   images: string[],
-  onProgress?: (operation: any) => void
+  onProgress?: (operation: any) => void,
+  includeAudio: boolean = false
 ): Promise<string> => {
   const ai = getAI();
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
@@ -212,7 +248,7 @@ export const generateFullVideo = async (
     ],
   });
 
-  updateTokenUsage(analysisResponse);
+  updateTokenUsage(analysisResponse, 'analysis');
   const finalVideoPrompt = analysisResponse.text || "A cinematic sequence transitioning through various artistic scenes with professional lighting and camera work.";
 
   // 2. Generate the video using the intelligent prompt
@@ -231,7 +267,8 @@ export const generateFullVideo = async (
         },
         referenceType: "ASSET" as any,
       })),
-    }
+      includeAudio
+    } as any
   });
 
   // Poll for completion
@@ -239,6 +276,10 @@ export const generateFullVideo = async (
     if (onProgress) onProgress(operation);
     await new Promise(resolve => setTimeout(resolve, 10000));
     operation = await ai.operations.getVideosOperation({ operation: operation });
+  }
+
+  if ((operation.response as any)?.usageMetadata) {
+    updateTokenUsage(operation.response, 'video');
   }
 
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
@@ -296,7 +337,7 @@ export const detectGridItems = async (base64Image: string): Promise<BoundingBox[
     },
   });
 
-  updateTokenUsage(response);
+  updateTokenUsage(response, 'analysis');
 
   try {
     return JSON.parse(response.text || "[]");
@@ -331,6 +372,8 @@ export const upscaleImage = async (
       },
     },
   });
+
+  updateTokenUsage(response, 'image');
 
   for (const part of response.candidates?.[0]?.content?.parts || []) {
     if (part.inlineData) {
@@ -383,7 +426,7 @@ export const suggestAIFirst = async (images: { id: string, url: string }[]): Pro
     },
   });
 
-  updateTokenUsage(response);
+  updateTokenUsage(response, 'analysis');
 
   try {
     return JSON.parse(response.text || "[]");

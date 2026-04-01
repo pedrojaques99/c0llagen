@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ZoomIn, Layers, Video, Send, Play, Sparkles } from 'lucide-react';
+import { ZoomIn, Layers, Video, Send, Play, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { Button, IconButton } from '../ui/Button';
 import { Timer } from '../ui/Timer';
 import { AnimationPreset } from '../../types';
@@ -18,6 +18,8 @@ interface SourcePreviewProps {
   analysisStartTime: number | null;
   animationStartTime: number | null;
   onFullscreen: (url: string) => void;
+  allowSound: boolean;
+  onSoundToggle: () => void;
 }
 
 export const SourcePreview: React.FC<SourcePreviewProps> = ({
@@ -32,6 +34,8 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
   analysisStartTime,
   animationStartTime,
   onFullscreen,
+  allowSound,
+  onSoundToggle,
 }) => {
   return (
     <div className="flex flex-col gap-6 p-1 rounded-3xl">
@@ -92,6 +96,13 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
                 onKeyDown={(e) => e.key === 'Enter' && onAnimate()}
                 placeholder="Describe the cinematic vision..."
                 className="flex-1 bg-transparent border-none outline-none text-sm px-6 py-3 text-ink placeholder:text-muted"
+              />
+              <IconButton 
+                onClick={onSoundToggle}
+                variant={allowSound ? 'primary' : 'secondary'}
+                icon={allowSound ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                className="p-4"
+                title={allowSound ? "Sound Enabled" : "Sound Disabled"}
               />
               <IconButton 
                 onClick={onAnimate}

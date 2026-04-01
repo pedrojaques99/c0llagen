@@ -53,6 +53,7 @@ export default function App() {
   const [animationStartTime, setAnimationStartTime] = useState<number | null>(null);
   const [upscaleStartTime, setUpscaleStartTime] = useState<number | null>(null);
   const [fullVideoStartTime, setFullVideoStartTime] = useState<number | null>(null);
+  const [allowSound, setAllowSound] = useState(true);
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
@@ -223,7 +224,7 @@ export default function App() {
     if (!crop || !crop.upscaledUrl || crop.isAnimating) return;
     setCroppedImages(prev => prev.map(c => c.id === id ? { ...c, isAnimating: true, animationStartTime: Date.now(), animationPrompt: prompt } : c));
     try {
-      const videoUrl = (await generateVideo(crop.upscaledUrl || crop.url, prompt)) as string;
+      const videoUrl = (await generateVideo(crop.upscaledUrl || crop.url, prompt, undefined, allowSound)) as string;
       setCroppedImages(prev => prev.map(c => c.id === id ? { ...c, videoUrl, isAnimating: false } : c));
     } catch (err: any) {
       console.error(err);
@@ -239,7 +240,7 @@ export default function App() {
     setIsAnimatingSource(true);
     setAnimationStartTime(Date.now());
     try {
-      const videoUrl = await generateVideo(sourceImage, sourcePrompt);
+      const videoUrl = await generateVideo(sourceImage, sourcePrompt, undefined, allowSound);
       setVideoModalUrl(videoUrl);
       setIsAnimatingSource(false);
       setShowSourcePrompt(false);
@@ -274,7 +275,7 @@ export default function App() {
     setAnimationStartTime(Date.now());
     setShowFrameModal(false);
     try {
-      const videoUrl = (await generateVideoWithFrames(start, end, prompt)) as string;
+      const videoUrl = (await generateVideoWithFrames(start, end, prompt, undefined, allowSound)) as string;
       setVideoModalUrl(videoUrl);
       setIsAnimatingSource(false);
       setAnimationStartTime(null);
@@ -292,7 +293,7 @@ export default function App() {
     try {
       const targetImages = selectedIds.size > 0 ? croppedImages.filter(c => selectedIds.has(c.id)) : croppedImages;
       const imageUrls = targetImages.map(c => c.upscaledUrl || c.url);
-      const videoUrl = await generateFullVideo(imageUrls);
+      const videoUrl = await generateFullVideo(imageUrls, undefined, allowSound);
       setVideoModalUrl(videoUrl);
       setIsCreatingFullVideo(false);
       setFullVideoStartTime(null);
@@ -376,6 +377,28 @@ export default function App() {
     });
   };
 
+  const handleAddNewCard = () => {
+    const newId = `manual-${Date.now()}`;
+    const newCard: CroppedImage = {
+      id: newId,
+      url: '', // Empty URL initially for manual cards
+      isUpscaling: false,
+      isAnimating: false
+    };
+    setCroppedImages(prev => [newCard, ...prev]);
+    // Optionally focus the new card or scroll to it
+  };
+
+  const handleUpdateCardImage = async (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const url = e.target?.result as string;
+      const thumbnailUrl = await generateThumbnail(url, id);
+      setCroppedImages(prev => prev.map(c => c.id === id ? { ...c, url, thumbnailUrl } : c));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSelectAll = () => setSelectedIds(new Set(croppedImages.map(c => c.id)));
 
   const downloadImage = async (url: string, filename: string) => {
@@ -417,7 +440,26 @@ export default function App() {
           upscaleStartTime={upscaleStartTime} onFrameAnimateClick={() => setShowFrameModal(true)} sourceImage={sourceImage}
           hasCroppedImages={croppedImages.length > 0} onCreateFullVideo={handleCreateFullVideo} 
           isCreatingFullVideo={isCreatingFullVideo} fullVideoStartTime={fullVideoStartTime}
+          breadcrumbs={[
+            { id: 'home', label: 'Home', onClick: handleReset, active: !sourceImage },
+            ...(sourceImage ? [
+              { 
+                id: 'source', 
+                label: 'Source', 
+                onClick: () => {
+                  croppedImages.forEach(c => revokeThumbnail(c.id));
+                  setCroppedImages([]);
+                  setSelectedIds(new Set());
+                },
+                active: sourceImage && croppedImages.length === 0 
+              }
+            ] : []),
+            ...(croppedImages.length > 0 ? [
+              { id: 'assets', label: 'Assets', active: true }
+            ] : [])
+          ]}
         />
+
 
         <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" multiple className="hidden" />
 
@@ -447,6 +489,7 @@ export default function App() {
                     setRemotionData({ name: "Single Render", thumbnailUrl: sourceImage!, slides: [{ imageUrl: sourceImage!, preset, durationInSeconds: 5, ...dims }] });
                   }}
                   analysisStartTime={analysisStartTime} animationStartTime={animationStartTime} onFullscreen={setFullscreenUrl}
+                  allowSound={allowSound} onSoundToggle={() => setAllowSound(!allowSound)}
                 />
                 {!isAnalyzing && !isAnimatingSource && !showSourcePrompt && (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-8 flex justify-center gap-4">
@@ -458,7 +501,7 @@ export default function App() {
             )}
 
             {croppedImages.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                 {croppedImages.map((crop, idx) => (
                   <BentoItem key={crop.id} crop={crop} index={idx} isSelected={selectedIds.has(crop.id)}
                     onToggleSelect={toggleSelect} onRemove={removeImage} onUpscale={handleUpscale} onAnimate={handleAnimate}
@@ -467,6 +510,7 @@ export default function App() {
                       setRemotionData({ name: `Item ${idx+1}`, thumbnailUrl: crop.thumbnailUrl || url, slides: [{ imageUrl: url, preset, durationInSeconds: 5, ...dims }] });
                     }}
                     onDownload={downloadImage} onFullscreen={setFullscreenUrl} onViewVideo={setVideoModalUrl}
+                    onUpdateImage={(file) => handleUpdateCardImage(crop.id, file)}
                   />
                 ))}
               </div>
@@ -481,7 +525,16 @@ export default function App() {
         <BatchToolbar selectedCount={selectedIds.size} totalCount={croppedImages.length} onSelectAll={handleSelectAll} onClearSelection={() => setSelectedIds(new Set())}
           onBatchUpscale={handleBatchUpscale} onBatchDownload={downloadAll} onBatchRemove={handleBatchRemove} onBatchRemotion={handleBatchRemotion}
           onAISuggest={() => handleAISuggest()} isAISuggesting={isAISuggesting} />
-        {sourceImage && <FrameAnimateModal isOpen={showFrameModal} onClose={() => setShowFrameModal(false)} onAnimate={handleFrameAnimate} sourceImage={sourceImage} />}
+        {sourceImage && (
+          <FrameAnimateModal 
+            isOpen={showFrameModal} 
+            onClose={() => setShowFrameModal(false)} 
+            onAnimate={handleFrameAnimate} 
+            sourceImage={sourceImage}
+            allowSound={allowSound}
+            onSoundToggle={() => setAllowSound(!allowSound)}
+          />
+        )}
         <RemotionPlayerModal isOpen={!!remotionData} onClose={() => setRemotionData(null)} name={remotionData?.name} thumbnailUrl={remotionData?.thumbnailUrl}
           imageUrl={remotionData?.slides?.[0]?.imageUrl || ''} preset={remotionData?.slides?.[0]?.preset || 'zoom-in'}
           slides={remotionData?.slides} transition={remotionData?.transition} />
@@ -500,6 +553,25 @@ export default function App() {
                   {uploadStartTime && <LiveTimer startTime={uploadStartTime} />}</div>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {(sourceImage || croppedImages.length > 0) && selectedIds.size === 0 && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.5, y: 100, x: '-50%' }} 
+              animate={{ opacity: 1, scale: 1, y: 0, x: '-50%' }} 
+              exit={{ opacity: 0, scale: 0.5, y: 100, x: '-50%' }}
+              className="fixed bottom-10 left-1/2 z-[50]"
+            >
+              <button 
+                onClick={handleAddNewCard}
+                className="w-16 h-16 rounded-full bg-ink text-bg flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:scale-110 active:scale-95 transition-all duration-500 group ring-4 ring-bg/20"
+                title="Add Manual Card"
+              >
+                <div className="relative">
+                   <span className="text-4xl font-light leading-none">+</span>
+                </div>
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

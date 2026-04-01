@@ -1,14 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Upload, Film, Send, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { X, Upload, Film, Send, Image as ImageIcon, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { Button, IconButton } from '../ui/Button';
 import { PROMPT_PRESETS } from '../../services/gemini';
 
 interface FrameAnimateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAnimate: (start: string, end: string, prompt: string) => void;
   sourceImage: string;
+  allowSound: boolean;
+  onSoundToggle: () => void;
 }
 
 export const FrameAnimateModal: React.FC<FrameAnimateModalProps> = ({
@@ -16,6 +17,8 @@ export const FrameAnimateModal: React.FC<FrameAnimateModalProps> = ({
   onClose,
   onAnimate,
   sourceImage,
+  allowSound,
+  onSoundToggle,
 }) => {
   const [startImage, setStartImage] = useState<string>(sourceImage);
   const [endImage, setEndImage] = useState<string | null>(null);
@@ -138,6 +141,13 @@ export const FrameAnimateModal: React.FC<FrameAnimateModalProps> = ({
 
           <div className="p-8 bg-white/[0.02] border-t border-white/5 flex justify-end items-center gap-6">
             <span className="text-[10px] font-serif italic text-white/20">Veo 3 will interpolate motion between frames</span>
+            <IconButton 
+              onClick={onSoundToggle}
+              variant={allowSound ? 'primary' : 'secondary'}
+              icon={allowSound ? <Volume2 size={20} /> : <VolumeX size={20} />}
+              title={allowSound ? "Sound Enabled" : "Sound Disabled"}
+              className="p-4"
+            />
             <Button 
               onClick={() => endImage && prompt && onAnimate(startImage, endImage, prompt)}
               disabled={!endImage || !prompt.trim()}
