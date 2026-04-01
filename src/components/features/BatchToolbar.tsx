@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Maximize2, Download, Video, Film, Trash2, X, Sparkles, Wand2
+  Maximize2, Download, Video, Film, Trash2, X, Play
 } from 'lucide-react';
 import { Button, IconButton } from '../ui/Button';
 import { AnimationPreset } from '../../types';
@@ -72,7 +72,7 @@ export const BatchToolbar: React.FC<BatchToolbarProps> = ({
             <IconButton 
               onClick={onAISuggest}
               disabled={isAISuggesting}
-              icon={<Wand2 size={18} className={isAISuggesting ? "animate-pulse" : ""} />}
+              icon={<Video size={18} className={isAISuggesting ? "animate-pulse" : ""} />}
               badge="AI"
               badgeVariant="gemini"
               title="AI Suggest"

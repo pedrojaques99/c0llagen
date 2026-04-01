@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  X, Maximize2, Download, CheckCircle2, Sparkles, CheckSquare, Square, Video, Play, Loader2, Film
+  X, Maximize2, Download, CheckCircle2, CheckSquare, Square, Video, Play, Loader2, Film
 } from 'lucide-react';
 import { IconButton } from '../ui/Button';
 import { Timer } from '../ui/Timer';
@@ -190,11 +190,11 @@ export const BentoItem: React.FC<BentoItemProps> = React.memo(({
                       />
                       <IconButton 
                         onClick={handleAnimate}
-                        icon={<Sparkles size={14} className="text-ink" />}
+                        icon={<Video size={14} className="text-ink" />}
                         variant="primary"
                         size="sm"
                         badge="AI"
-                        disabled={!prompt.trim() || !crop.upscaledUrl}
+                        disabled={!prompt.trim() || !crop.url}
                       />
                     </div>
                   </div>

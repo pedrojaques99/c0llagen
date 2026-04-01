@@ -24,7 +24,7 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles = "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-300 active:scale-[0.98] cursor-pointer disabled:opacity-30 disabled:pointer-events-none relative overflow-visible";
   
   const variants = {
-    primary: "bg-ink text-bg hover:opacity-90 shadow-2xl",
+    primary: "bg-ink text-bg hover:opacity-90 shadow-md",
     secondary: "bg-glass text-ink hover:bg-glass-muted border border-border backdrop-blur-xl",
     outline: "border border-border hover:border-ink/40 text-ink bg-transparent",
     ghost: "text-muted hover:text-ink hover:bg-glass"
@@ -69,7 +69,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   ...props 
 }) => {
   const variants = {
-    primary: "bg-ink text-bg hover:opacity-90 shadow-2xl",
+    primary: "bg-ink text-bg hover:opacity-90 shadow-md",
     secondary: "bg-glass text-ink hover:bg-glass-muted border border-border backdrop-blur-xl",
     outline: "border border-border hover:border-ink/40 text-ink bg-transparent",
     ghost: "text-muted hover:text-ink hover:bg-glass"

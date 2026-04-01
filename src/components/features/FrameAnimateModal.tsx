@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Upload, Film, Send, Image as ImageIcon, Sparkles, Volume2, VolumeX } from 'lucide-react';
+import { X, Upload, Film, Send, Image as ImageIcon, Volume2, VolumeX } from 'lucide-react';
 import { Button, IconButton } from '../ui/Button';
 import { PROMPT_PRESETS } from '../../services/gemini';
 
@@ -124,7 +124,7 @@ export const FrameAnimateModal: React.FC<FrameAnimateModalProps> = ({
                       onClick={() => setPrompt(preset.prompt)}
                       className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
                     >
-                      <Sparkles size={10} className="text-white/20" />
+                      <Film size={10} className="text-white/20" />
                       {preset.name}
                     </button>
                   ))}

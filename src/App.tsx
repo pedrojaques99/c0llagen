@@ -221,7 +221,7 @@ export default function App() {
 
   const handleAnimate = async (id: string, prompt: string) => {
     const crop = croppedImages.find(c => c.id === id);
-    if (!crop || !crop.upscaledUrl || crop.isAnimating) return;
+    if (!crop || !crop.url || crop.isAnimating) return;
     setCroppedImages(prev => prev.map(c => c.id === id ? { ...c, isAnimating: true, animationStartTime: Date.now(), animationPrompt: prompt } : c));
     try {
       const videoUrl = (await generateVideo(crop.upscaledUrl || crop.url, prompt, undefined, allowSound)) as string;

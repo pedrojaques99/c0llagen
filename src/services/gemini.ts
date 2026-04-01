@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { BoundingBox } from "../types";
 
 const CONFIG = {
-  GEMINI_NANO_MODEL: "gemini-1.5-flash-8b", // Using Flash 8B as the Cloud equivalent for Gemini Nano
+  GEMINI_NANO_MODEL: "gemini-2.0-flash-lite", // Lightweight model for fast/cheap tasks
   UPSCALE_MODEL: "gemini-3.1-flash-image-preview",
   VIDEO_MODEL: "veo-3.1-lite-generate-preview",
   VIDEO_PRO_MODEL: "veo-3.1-generate-preview", // Referred to as Veo 3

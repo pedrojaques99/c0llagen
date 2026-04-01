@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ZoomIn, Layers, Video, Send, Play, Sparkles, Volume2, VolumeX } from 'lucide-react';
+import { ZoomIn, Layers, Video, Send, Play, Volume2, VolumeX, Film } from 'lucide-react';
 import { Button, IconButton } from '../ui/Button';
 import { Timer } from '../ui/Timer';
 import { AnimationPreset } from '../../types';
@@ -125,7 +125,7 @@ export const SourcePreview: React.FC<SourcePreviewProps> = ({
                   onClick={() => onPromptChange(preset.prompt)}
                   className="px-4 py-2 rounded-full bg-glass border border-border text-[10px] font-bold uppercase tracking-widest text-ink/60 hover:text-ink hover:bg-glass-muted transition-all flex items-center gap-2"
                 >
-                  <Sparkles size={12} className="text-ink/20" />
+                  <Video size={12} className="text-ink/20" />
                   {preset.name}
                 </button>
               ))}
